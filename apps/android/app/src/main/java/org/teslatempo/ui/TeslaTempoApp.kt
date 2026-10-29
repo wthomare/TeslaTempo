@@ -1,7 +1,6 @@
 package org.teslatempo.ui
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -25,19 +24,28 @@ import java.time.format.DateTimeFormatter
 fun TeslaTempoApp(model: DashboardViewModel) {
     val state by model.state.collectAsStateWithLifecycle()
     var settings by rememberSaveable { mutableStateOf(false) }
-    val colors = if (isSystemInDarkTheme()) darkColorScheme(primary = Color(0xFFB2D993))
-        else lightColorScheme(primary = Color(0xFF215745), secondaryContainer = Color(0xFFE6EEDB), background = Color(0xFFF7F8F2))
+    var planning by rememberSaveable { mutableStateOf(false) }
+    val scroll = rememberScrollState()
+    LaunchedEffect(settings, planning) { scroll.scrollTo(0) }
+    val colors = darkColorScheme(
+        primary = Color(0xFF82B5FF), onPrimary = Color(0xFF08192E),
+        background = Color(0xFF101112), surface = Color(0xFF171819),
+        surfaceVariant = Color(0xFF26282A), surfaceContainerHighest = Color(0xFF232527),
+        secondaryContainer = Color(0xFF20262D), onSecondaryContainer = Color(0xFFE4E8ED),
+        onBackground = Color(0xFFF4F4F4), onSurface = Color(0xFFF4F4F4),
+        onSurfaceVariant = Color(0xFFB8BDC4), outline = Color(0xFF686D74),
+    )
     MaterialTheme(colorScheme = colors) {
-        BackHandler(settings) { settings = false }
+        BackHandler(settings || planning) { settings = false; planning = false }
         Scaffold { insets ->
-            Column(Modifier.fillMaxSize().padding(insets).imePadding().verticalScroll(rememberScrollState()).padding(24.dp),
+            Column(Modifier.fillMaxSize().padding(insets).imePadding().verticalScroll(scroll).padding(24.dp),
                 verticalArrangement = Arrangement.spacedBy(20.dp)) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Column {
                         Text("TESLA TEMPO", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-                        Text(if (settings) "Mon relais" else "Ma recharge", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
+                        Text(if (settings) "Mon relais" else if (planning) "Planification" else "Ma recharge", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
                     }
-                    TextButton(onClick = { settings = !settings }) { Text(if (settings) "Accueil" else "Réglages") }
+                    TextButton(onClick = { if (planning) planning = false else settings = !settings }) { Text(if (settings || planning) "Accueil" else "Réglages") }
                 }
                 if (state.loading) LinearProgressIndicator(Modifier.fillMaxWidth())
                 state.error?.let { message ->
@@ -45,10 +53,13 @@ fun TeslaTempoApp(model: DashboardViewModel) {
                         Text(message, Modifier.padding(16.dp))
                     }
                 }
-                if (settings) {
+                if (planning) {
+                    PlannerScreen()
+                } else if (settings) {
                     Settings(state, { url, token -> model.connect(url, token) { settings = false } },
                         { model.useDemo { settings = false } })
                 } else {
+                    Button(onClick = { planning = true }, modifier = Modifier.fillMaxWidth()) { Text("Simuler un plan F20") }
                     state.dashboard?.let { DashboardContent(it, state.relayUrl, state.loading, model::refresh) }
                     if (state.dashboard == null && !state.loading) {
                         Text("Aucune donnée disponible. Vérifiez la connexion au relais ou ouvrez les réglages.")
@@ -109,7 +120,7 @@ private fun DashboardContent(data: Dashboard, relayUrl: String?, loading: Boolea
         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("Tempo & planification", style = MaterialTheme.typography.titleLarge)
             Text("Aujourd’hui : couleur inconnue\nDemain : couleur inconnue")
-            Text("La source Tempo et le moteur de calcul seront intégrés à une prochaine étape. Aucun plan ni coût n’est encore calculé.")
+            Text("Le simulateur F20 calcule des plans avec des tarifs fictifs. La source Tempo réelle reste à connecter.")
         }
     }
     Text("Reçu à ${DateTimeFormatter.ofPattern("dd/MM HH:mm:ss").withZone(ZoneId.systemDefault()).format(data.receivedAt)} · heure du téléphone\nLa date de mesure du véhicule n’est pas disponible ; le relais peut servir son cache de 30 s.", style = MaterialTheme.typography.bodySmall)

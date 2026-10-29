@@ -27,6 +27,16 @@ class AppTest {
         compose.waitUntil(10_000) { compose.onAllNodesWithText("HTTPS est obligatoire pour ce relais.").fetchSemanticsNodes().isNotEmpty() }
     }
 
+    @Test fun plannerSimulationAndValidation() {
+        compose.onNodeWithText("Simuler un plan F20").performClick()
+        compose.onNodeWithText("SIMULATION · DONNÉES FICTIVES").assertIsDisplayed()
+        compose.onNodeWithText("Plan économique · brouillon").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Absence à 8 h").performScrollTo().performClick()
+        compose.onAllNodesWithText("Objectif non atteint", substring = true).onFirst().performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Courant (A, maximum 10)").performScrollTo().performTextReplacement("11")
+        compose.onNodeWithText("Le courant doit rester entre 1 et 10 A.").performScrollTo().assertIsDisplayed()
+    }
+
     @Test fun credentialEncryptionRoundtripAndDeletion() {
         val context = compose.activity.applicationContext
         val store = CredentialStore(context)
