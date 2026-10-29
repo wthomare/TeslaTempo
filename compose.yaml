@@ -1,7 +1,7 @@
 name: teslatempo
 services:
   relay:
-    build: .
+    build: ./services/relay
     image: teslatempo-relay:0.1.0
     user: "${RELAY_UID:-1000}:${RELAY_GID:-1000}"
     restart: unless-stopped
