@@ -10,6 +10,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.teslatempo.security.CredentialStore
 import org.teslatempo.ui.DashboardViewModel
+import org.teslatempo.ui.PersonalViewModel
+import org.teslatempo.personal.PersonalStore
 import org.teslatempo.ui.TeslaTempoApp
 
 class MainActivity : ComponentActivity() {
@@ -20,8 +22,11 @@ class MainActivity : ComponentActivity() {
         val factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                DashboardViewModel(CredentialStore(applicationContext)) as T
+                when (modelClass) {
+                    PersonalViewModel::class.java -> PersonalViewModel(PersonalStore(applicationContext))
+                    else -> DashboardViewModel(CredentialStore(applicationContext))
+                } as T
         }
-        setContent { TeslaTempoApp(viewModel(factory = factory)) }
+        setContent { TeslaTempoApp(viewModel(factory = factory), viewModel(factory = factory)) }
     }
 }

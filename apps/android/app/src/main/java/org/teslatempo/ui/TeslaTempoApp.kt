@@ -15,18 +15,28 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.repeatOnLifecycle
+import kotlinx.coroutines.delay
 import org.teslatempo.BuildConfig
 import org.teslatempo.domain.Dashboard
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 @Composable
-fun TeslaTempoApp(model: DashboardViewModel) {
+fun TeslaTempoApp(model: DashboardViewModel, personal: PersonalViewModel) {
     val state by model.state.collectAsStateWithLifecycle()
-    var settings by rememberSaveable { mutableStateOf(false) }
-    var planning by rememberSaveable { mutableStateOf(false) }
+    val personalState by personal.state.collectAsStateWithLifecycle()
+    var page by rememberSaveable { mutableStateOf("home") }
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    LaunchedEffect(lifecycle, personal) {
+        lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            while (true) { personal.onResume(); delay(60_000) }
+        }
+    }
     val scroll = rememberScrollState()
-    LaunchedEffect(settings, planning) { scroll.scrollTo(0) }
+    LaunchedEffect(page) { scroll.scrollTo(0) }
     val colors = darkColorScheme(
         primary = Color(0xFF82B5FF), onPrimary = Color(0xFF08192E),
         background = Color(0xFF101112), surface = Color(0xFF171819),
@@ -36,16 +46,16 @@ fun TeslaTempoApp(model: DashboardViewModel) {
         onSurfaceVariant = Color(0xFFB8BDC4), outline = Color(0xFF686D74),
     )
     MaterialTheme(colorScheme = colors) {
-        BackHandler(settings || planning) { settings = false; planning = false }
+        BackHandler(page != "home") { page = "home" }
         Scaffold { insets ->
             Column(Modifier.fillMaxSize().padding(insets).imePadding().verticalScroll(scroll).padding(24.dp),
                 verticalArrangement = Arrangement.spacedBy(20.dp)) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Column {
                         Text("TESLA TEMPO", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-                        Text(if (settings) "Mon relais" else if (planning) "Planification" else "Ma recharge", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
+                        Text(when (page) { "relay" -> "Mon relais"; "demo", "plan" -> "Planification"; "profile" -> "Mon profil"; "tempo" -> "Tempo"; else -> "Ma recharge" }, style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
                     }
-                    TextButton(onClick = { if (planning) planning = false else settings = !settings }) { Text(if (settings || planning) "Accueil" else "Réglages") }
+                    TextButton(onClick = { page = if (page == "home") "relay" else "home" }) { Text(if (page != "home") "Accueil" else "Réglages") }
                 }
                 if (state.loading) LinearProgressIndicator(Modifier.fillMaxWidth())
                 state.error?.let { message ->
@@ -53,14 +63,23 @@ fun TeslaTempoApp(model: DashboardViewModel) {
                         Text(message, Modifier.padding(16.dp))
                     }
                 }
-                if (planning) {
+                if (page == "demo") {
                     PlannerScreen()
-                } else if (settings) {
-                    Settings(state, { url, token -> model.connect(url, token) { settings = false } },
-                        { model.useDemo { settings = false } })
+                } else if (page == "profile") {
+                    ProfileScreen(personalState) { value -> personal.save(value) { page = "home" } }
+                } else if (page == "tempo") {
+                    TempoDetails(personalState, personal::refresh)
+                } else if (page == "plan") {
+                    PersonalPlannerScreen(personalState) { page = "profile" }
+                } else if (page == "relay") {
+                    Settings(state, { url, token -> model.connect(url, token) { page = "home" } },
+                        { model.useDemo { page = "home" } })
                 } else {
-                    Button(onClick = { planning = true }, modifier = Modifier.fillMaxWidth()) { Text("Simuler un plan F20") }
+                    Button(onClick = { page = "plan" }, modifier = Modifier.fillMaxWidth()) { Text("Mon plan personnel") }
+                    OutlinedButton(onClick = { page = "profile" }, modifier = Modifier.fillMaxWidth()) { Text("Mon profil et calendrier") }
+                    TextButton(onClick = { page = "demo" }) { Text("Simuler un plan F20") }
                     state.dashboard?.let { DashboardContent(it, state.relayUrl, state.loading, model::refresh) }
+                    TempoSummary(personalState, personal::refresh) { page = "tempo" }
                     if (state.dashboard == null && !state.loading) {
                         Text("Aucune donnée disponible. Vérifiez la connexion au relais ou ouvrez les réglages.")
                     }
@@ -114,13 +133,6 @@ private fun DashboardContent(data: Dashboard, relayUrl: String?, loading: Boolea
                 Text("Courant demandé : ${data.charge?.current?.let { "$it A" } ?: "inconnu"}")
                 Text("Le branchement et la puissance réelle ne sont pas déduits du courant demandé.", style = MaterialTheme.typography.bodySmall)
             }
-        }
-    }
-    Card(Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Tempo & planification", style = MaterialTheme.typography.titleLarge)
-            Text("Aujourd’hui : couleur inconnue\nDemain : couleur inconnue")
-            Text("Le simulateur F20 calcule des plans avec des tarifs fictifs. La source Tempo réelle reste à connecter.")
         }
     }
     Text("Reçu à ${DateTimeFormatter.ofPattern("dd/MM HH:mm:ss").withZone(ZoneId.systemDefault()).format(data.receivedAt)} · heure du téléphone\nLa date de mesure du véhicule n’est pas disponible ; le relais peut servir son cache de 30 s.", style = MaterialTheme.typography.bodySmall)

@@ -74,16 +74,16 @@ fun PlannerScreen() {
 }
 
 @Composable
-private fun EstimateCard(title: String, plan: PlanEstimate, request: ChargingRequest) {
+internal fun EstimateCard(title: String, plan: PlanEstimate, request: ChargingRequest, fictitious: Boolean = true) {
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(title, style = MaterialTheme.typography.titleLarge)
             Text("${amount(plan.costEuros)} €", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
-            Text(if (plan.conservative) "Estimation conservatrice · couleur inconnue" else "Coût estimé · tarifs fictifs")
+            Text(if (plan.conservative) "Estimation conservatrice · couleur inconnue" else if (fictitious) "Coût estimé · tarifs fictifs" else "Coût estimé · grille publiée")
             Text("${amount(plan.gridKwh)} kWh au compteur · ${amount(request.gridKw)} kW estimés")
             if (plan.complete) {
                 Text("Objectif atteint à ${plan.completion?.let(timeFormat::format) ?: "—"}")
-                if (plan.completion?.isAfter(request.departure) == true) Text("F20 : la recharge continue après le départ indicatif de 8 h.")
+                if (plan.completion?.isAfter(request.departure) == true) Text("F20 : objectif atteint après le départ indicatif (${timeFormat.format(request.departure)}).")
             } else {
                 Text("Objectif non atteint : ${amount(plan.estimatedSoc)} % estimés, ${amount(plan.missingGridKwh)} kWh réseau manquants.", color = MaterialTheme.colorScheme.error)
             }
