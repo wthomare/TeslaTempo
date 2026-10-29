@@ -1,0 +1,6 @@
+# Example for an existing Caddy installation. Replace both names/addresses.
+# Do not point this proxy at the TrueNAS administration interface.
+relay.example.com {
+    # No access log: OAuth URLs contain temporary authorization codes.
+    reverse_proxy 127.0.0.1:8080
+}

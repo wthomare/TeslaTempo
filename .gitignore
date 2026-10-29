@@ -38,3 +38,8 @@ Thumbs.db
 *.sqlite3
 runtime/
 backups/
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+data/

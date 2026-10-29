@@ -23,3 +23,7 @@ secrets
 **/*.sqlite3
 runtime
 backups
+.venv
+**/__pycache__
+.pytest_cache
+data
