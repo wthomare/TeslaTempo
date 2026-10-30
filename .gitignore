@@ -43,3 +43,10 @@ __pycache__/
 .pytest_cache/
 *.pyc
 data/
+
+# Notes, interventions et configuration propres à une installation
+/private/
+**/*.private.md
+**/*.local.md
+/deploy/*.local.*
+/apps/android/gradle/gradle-daemon-jvm.properties

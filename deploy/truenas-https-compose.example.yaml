@@ -4,7 +4,7 @@ services:
   relay:
     image: teslatempo-relay:0.1.0
     pull_policy: never
-    user: "950:950"
+    user: "1000:1000"
     restart: unless-stopped
     read_only: true
     cap_drop: [ALL]
