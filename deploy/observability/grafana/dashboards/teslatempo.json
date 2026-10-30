@@ -1,0 +1,127 @@
+{
+  "uid": "teslatempo-diagnostics",
+  "title": "TeslaTempo — diagnostics",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timezone": "browser",
+  "tags": [
+    "teslatempo"
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "request",
+        "label": "Identifiant requête ou rapport",
+        "type": "textbox",
+        "query": "",
+        "current": {
+          "text": "",
+          "value": ""
+        }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Chronologie — rechercher un identifiant Android ou relais",
+      "type": "logs",
+      "datasource": {
+        "type": "loki",
+        "uid": "teslatempo-loki"
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "wrapLogMessage": true,
+        "sortOrder": "Descending"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "{app=\"teslatempo\"} |= \"$request\"",
+          "queryType": "range",
+          "datasource": {
+            "type": "loki",
+            "uid": "teslatempo-loki"
+          }
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Erreurs et indisponibilités",
+      "type": "logs",
+      "datasource": {
+        "type": "loki",
+        "uid": "teslatempo-loki"
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 10
+      },
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "wrapLogMessage": true,
+        "sortOrder": "Descending"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "{app=\"teslatempo\"} | json | outcome =~ \"http_error|network_error|invalid_response|crash|unavailable\"",
+          "queryType": "range",
+          "datasource": {
+            "type": "loki",
+            "uid": "teslatempo-loki"
+          }
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Disponibilité et redémarrages",
+      "type": "logs",
+      "datasource": {
+        "type": "loki",
+        "uid": "teslatempo-loki"
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 20
+      },
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "wrapLogMessage": true,
+        "sortOrder": "Descending"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "{app=\"teslatempo\"} | json | operation =~ \"health|startup\"",
+          "queryType": "range",
+          "datasource": {
+            "type": "loki",
+            "uid": "teslatempo-loki"
+          }
+        }
+      ]
+    }
+  ]
+}

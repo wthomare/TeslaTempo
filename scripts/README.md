@@ -18,3 +18,13 @@ Les fichiers d'instance restent à la racine et sont exclus de Git. Aucun script
 
 Voir [la distribution Android](../docs/android-distribution.md) et
 [l'orchestration](../docs/command-orchestration.md). Ne jamais publier la clé de signature.
+
+## Diagnostics privés
+
+- `init-observability.py` : dossiers privés et mot de passe Grafana initial.
+- `logs-tunnel.sh` : tunnel SSH local vers Grafana.
+- `diagnosticsctl.py` : export protégé et filtré du relais, fichier 600.
+- `check-observability.py` : stack Docker temporaire avec données fictives, tests
+  de corrélation, confidentialité, authentification et pannes.
+
+Installation et limites : [diagnostics](../docs/diagnostics.md).

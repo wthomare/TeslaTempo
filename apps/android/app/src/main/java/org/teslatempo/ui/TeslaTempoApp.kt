@@ -163,6 +163,7 @@ private fun Settings(state: ScreenState, connect: (String, String) -> Unit, demo
     Text("Vérifie uniquement le relais et son statut, sans réveiller ni interroger la voiture. Laissez le jeton vide pour utiliser celui enregistré à la même adresse.", style = MaterialTheme.typography.bodySmall)
     state.diagnostic?.let { Text(it) }
     Text("Application ${BuildConfig.VERSION_NAME} · Android ${android.os.Build.VERSION.RELEASE}", style = MaterialTheme.typography.bodySmall)
+    DiagnosticsCard()
     HorizontalDivider()
     Text("Mode démonstration", style = MaterialTheme.typography.titleLarge)
     Text("Explorez l’interface avec un véhicule fictif. Revenir à ce mode efface la connexion enregistrée sur ce téléphone.")

@@ -31,19 +31,21 @@ class RelayGateway(
     allowLocalHttp: Boolean = false,
     client: OkHttpClient = OkHttpClient(),
 ) : VehicleGateway {
+    private val trace = ThreadLocal<String>()
     private val base = validateRelayUrl(credentials.url, allowLocalHttp)
     private val token = credentials.token.trim().also {
         if (it.isEmpty() || it.any { c -> c.code !in 33..126 }) throw RelayException("Le jeton du relais est vide ou invalide.")
     }
     // A redirect must never carry a user's token to another destination.
-    private val http = client.newBuilder().followRedirects(false).followSslRedirects(false)
+    private val http = client.newBuilder().addInterceptor(org.teslatempo.diagnostics.DiagnosticInterceptor()).followRedirects(false).followSslRedirects(false)
         .connectTimeout(10, TimeUnit.SECONDS).readTimeout(15, TimeUnit.SECONDS)
         .callTimeout(20, TimeUnit.SECONDS).retryOnConnectionFailure(false).build()
 
     private fun get(vararg segments: String, method: String = "GET"): JsonObject {
+        val requestId=java.util.UUID.randomUUID().toString();trace.set(requestId)
         val url = base.newBuilder().apply { segments.forEach { addPathSegment(it) } }.build()
         try {
-            http.newCall(Request.Builder().url(url).header("Authorization", "Bearer $token").method(method, null).build()).execute().use { response ->
+            http.newCall(Request.Builder().url(url).header("X-Request-ID", requestId).header("Authorization", "Bearer $token").method(method, null).build()).execute().use { response ->
                 if (!response.isSuccessful) {
                     val code = runCatching {
                         val error = JsonParser.parseString(response.peekBody(8192).string()).asJsonObject
@@ -68,7 +70,10 @@ class RelayGateway(
             }
         } catch (e: RelayException) { throw e
         } catch (_: IOException) { throw RelayException("Connexion impossible. Vérifiez l’adresse, le réseau et le certificat HTTPS.")
-        } catch (_: RuntimeException) { throw RelayException("Réponse du relais non reconnue.") }
+        } catch (failure: RuntimeException) {
+            org.teslatempo.diagnostics.DiagnosticLog.record("unknown","invalid_response",trace.get() ?: java.util.UUID.randomUUID().toString(),failure=failure)
+            throw RelayException("Réponse du relais non reconnue.")
+        }
     }
 
     fun diagnose(): RelayDiagnostics {
@@ -134,7 +139,10 @@ class RelayGateway(
             }
             return Dashboard(simulated, vehicles, selected, charge)
         } catch (e: RelayException) { throw e
-        } catch (_: RuntimeException) { throw RelayException("Réponse du relais non reconnue.") }
+        } catch (failure: RuntimeException) {
+            org.teslatempo.diagnostics.DiagnosticLog.record("unknown","invalid_response",trace.get() ?: java.util.UUID.randomUUID().toString(),failure=failure)
+            throw RelayException("Réponse du relais non reconnue.")
+        }
     }
 }
 

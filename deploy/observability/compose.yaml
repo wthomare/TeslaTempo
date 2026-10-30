@@ -1,0 +1,92 @@
+name: teslatempo-logs
+x-local-network: &local-network
+  HTTP_PROXY: ""
+  HTTPS_PROXY: ""
+  ALL_PROXY: ""
+  http_proxy: ""
+  https_proxy: ""
+  all_proxy: ""
+  NO_PROXY: "*"
+  no_proxy: "*"
+services:
+  loki:
+    image: grafana/loki@sha256:0db216b630ae1f348a1584c67f3cead8b4c1fc839169a39501db664744158e28
+    command: ["-config.file=/etc/loki/config.yaml"]
+    environment:
+      <<: *local-network
+      GOMAXPROCS: "2"
+    user: "${OBS_UID:-1000}:${OBS_GID:-1000}"
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 512m
+    cpus: 1
+    pids_limit: 128
+    volumes:
+      - ./loki.yaml:/etc/loki/config.yaml:ro
+      - ${OBSERVABILITY_HOME:?Set private data directory}/loki:/loki
+    tmpfs: [/tmp]
+    networks: [logs]
+    logging: {driver: json-file, options: {max-size: "5m", max-file: "2"}}
+  grafana:
+    image: grafana/grafana@sha256:488984b716c0862639f91a698adbe2862677a5a07bad42da5f03f3030883b205
+    user: "${OBS_UID:-1000}:${OBS_GID:-1000}"
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 384m
+    cpus: 1
+    pids_limit: 128
+    ports: ["127.0.0.1:13000:3000"]
+    environment:
+      <<: *local-network
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD__FILE: /run/secrets/grafana_admin_password
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES: "false"
+      GF_PLUGINS_PREINSTALL_DISABLED: "true"
+      GF_SERVER_ROOT_URL: http://localhost:13000
+      GF_LOG_LEVEL: warn
+      GF_LIVE_MAX_CONNECTIONS: "0"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/etc/grafana/dashboards:ro
+      - ${OBSERVABILITY_HOME}/grafana:/var/lib/grafana
+      - ${OBSERVABILITY_HOME}/secrets/grafana_admin_password:/run/secrets/grafana_admin_password:ro
+    tmpfs: [/tmp]
+    networks: [logs, frontend]
+    logging: {driver: json-file, options: {max-size: "5m", max-file: "2"}}
+  collector:
+    image: teslatempo-diagnostics:0.1.0
+    build:
+      context: ../..
+      dockerfile: services/diagnostics/Dockerfile
+    user: "${OBS_UID:-1000}:${OBS_GID:-1000}"
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 96m
+    cpus: 0.25
+    pids_limit: 32
+    environment:
+      <<: *local-network
+      RELAY_HEALTH_URL: http://relay:8080/healthz
+      LOKI_PUSH_URL: http://loki:3100/loki/api/v1/push
+    volumes:
+      - ${RELAY_DIAGNOSTICS_DIR:?Set filtered relay log directory}:/logs:ro
+      - ${OBSERVABILITY_HOME}/collector:/state
+    networks: [logs, relay]
+    logging: {driver: json-file, options: {max-size: "1m", max-file: "2"}}
+networks:
+  frontend: {}
+  logs:
+    internal: true
+  relay:
+    external: true
+    name: ${RELAY_NETWORK:-teslatempo_default}

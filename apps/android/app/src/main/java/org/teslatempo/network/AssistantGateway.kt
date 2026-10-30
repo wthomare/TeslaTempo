@@ -12,18 +12,20 @@ data class AssistantModel(val id: String, val name: String)
 data class AssistantConnection(val connected: Boolean, val enabled: Boolean, val account: String?)
 
 class AssistantGateway(credentials: RelayCredentials, allowLocalHttp: Boolean = false, client: OkHttpClient = OkHttpClient()) {
+    private val trace = ThreadLocal<String>()
     private val base = validateRelayUrl(credentials.url, allowLocalHttp)
     private val token = credentials.token.trim().also {
         if (it.isEmpty() || it.any { c -> c.code !in 33..126 }) throw RelayException("Jeton du relais invalide.")
     }
-    private val http = client.newBuilder().followRedirects(false).followSslRedirects(false)
+    private val http = client.newBuilder().addInterceptor(org.teslatempo.diagnostics.DiagnosticInterceptor()).followRedirects(false).followSslRedirects(false)
         .connectTimeout(10, TimeUnit.SECONDS).readTimeout(85, TimeUnit.SECONDS)
         .callTimeout(90, TimeUnit.SECONDS).retryOnConnectionFailure(false).build()
 
     private fun call(path: String, method: String = "GET", payload: JsonObject? = null): JsonObject {
+        val requestId=java.util.UUID.randomUUID().toString();trace.set(requestId)
         try {
             val request = Request.Builder().url(base.newBuilder().addPathSegments("v1/chatgpt/$path").build())
-                .header("Authorization", "Bearer $token")
+                .header("X-Request-ID",requestId).header("Authorization", "Bearer $token")
                 .method(method, payload?.toString()?.toRequestBody("application/json".toMediaType())).build()
             return http.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) throw RelayException(when (response.code) {
@@ -40,7 +42,10 @@ class AssistantGateway(credentials: RelayCredentials, allowLocalHttp: Boolean = 
                 JsonParser.parseString(raw.toString(Charsets.UTF_8)).asJsonObject
             }
         } catch (e: RelayException) { throw e
-        } catch (_: Exception) { throw RelayException("Connexion interrompue ou réponse non reconnue. Aucun résultat complet reçu.") }
+        } catch (failure: Exception) {
+            org.teslatempo.diagnostics.DiagnosticLog.record("unknown","invalid_response",requestId,failure=failure)
+            throw RelayException("Connexion interrompue ou réponse non reconnue. Aucun résultat complet reçu.")
+        }
     }
     fun status(): AssistantConnection {
         try {

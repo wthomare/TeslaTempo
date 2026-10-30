@@ -19,6 +19,7 @@ class Config:
     client_id: str = ""
     client_secret: str = ""
     region: str = "eu"
+    diagnostics_dir: Path | None = None
 
     @property
     def fleet_url(self):
@@ -66,6 +67,7 @@ class Config:
             client_id=os.environ.get("TESLA_CLIENT_ID", ""),
             client_secret=read("TESLA_CLIENT_SECRET_FILE", "/run/secrets/tesla_client_secret") if mode == "tesla" else "",
             region=os.environ.get("TESLA_REGION", "eu"),
+            diagnostics_dir=Path(os.environ.get("DIAGNOSTICS_DIR", "/data/diagnostics")),
         )
         result.validate()
         return result

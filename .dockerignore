@@ -1,0 +1,8 @@
+**
+!services/
+!services/diagnostics/
+!services/diagnostics/Dockerfile
+!services/diagnostics/collector.py
+!services/relay/
+!services/relay/relay/
+!services/relay/relay/diagnostics.py

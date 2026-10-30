@@ -1,5 +1,18 @@
 # Historique des versions
 
+## Android 0.9.0 / relais 0.5.0
+
+- Diagnostics à liste fermée, UUID de corrélation commun, code/durée/version et
+  emplacement de code filtré ; aucun texte d'exception, secret ou payload brut.
+- Android : tampon local borné, aperçu et consentement avant envoi, attente liée
+  à la connexion approuvée, export JSON et effacement local.
+- Relais : réception authentifiée et limitée, export protégé, écriture asynchrone
+  bornée ; aucune dépendance de fonctionnement à la collecte.
+- Collecteur indépendant sans socket Docker ni secret du relais ; Loki/Grafana
+  privés et dashboard provisionné, rétention de sept jours après ingestion.
+- Scripts d'installation, tunnel SSH, export et tests Docker de panne/reprise.
+
+
 ## Android 0.8.0 / relais 0.4.0
 
 - Chaîne de commandes hors production : programme ponctuel borné, confirmation à

@@ -1,0 +1,22 @@
+name: Private diagnostics checks
+on:
+  push:
+    paths: ['services/relay/**', 'services/diagnostics/**', 'deploy/observability/**', 'scripts/check-observability.py', 'scripts/init-observability.py', '.dockerignore', '.github/workflows/observability.yml']
+  pull_request:
+    paths: ['services/relay/**', 'services/diagnostics/**', 'deploy/observability/**', 'scripts/check-observability.py', 'scripts/init-observability.py', '.dockerignore', '.github/workflows/observability.yml']
+permissions:
+  contents: read
+jobs:
+  synthetic-stack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: pip install -r services/relay/requirements-dev.txt
+      - run: docker build -t teslatempo-relay:0.5.0 services/relay
+      - run: docker build -t teslatempo-diagnostics:0.1.0 -f services/diagnostics/Dockerfile .
+      - name: Test correlation, privacy, authentication and service outages
+        run: python scripts/check-observability.py

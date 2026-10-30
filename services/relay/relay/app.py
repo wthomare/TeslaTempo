@@ -5,6 +5,9 @@ import secrets
 import sqlite3
 import threading
 import time
+import uuid
+import traceback
+from pathlib import Path
 from collections import deque
 from contextlib import asynccontextmanager
 from urllib.parse import urlencode
@@ -15,6 +18,13 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Resp
 
 from pydantic import BaseModel, Field, ConfigDict, StrictBool
 from relay.chatgpt import ChatGPT, ChatGPTError, ChatGPTStore
+
+
+class DiagnosticReport(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    report_id: str = Field(min_length=36, max_length=36)
+    consent: StrictBool
+    events: list[dict] = Field(min_length=1, max_length=100)
 
 
 class ExplanationRequest(BaseModel):
@@ -29,6 +39,7 @@ from relay import __version__
 from relay.config import Config
 from relay.store import Store
 from relay.observations import Observations
+from relay.diagnostics import Diagnostics, event, operation, validate, UUID, SITES, KINDS
 from relay.tesla import SCOPES, Tesla, UpstreamError
 
 
@@ -43,6 +54,8 @@ def create_app(config=None, transport=None):
     observations = Observations(config.data_dir, config.encryption_key)
     tesla = Tesla(config, store, transport)
     chatgpt = ChatGPT(ChatGPTStore(config.data_dir / "chatgpt", config.encryption_key), transport)
+    diagnostics = Diagnostics(config.diagnostics_dir)
+    uploads = deque()
     explanations = deque()
     explanation_lock = threading.Lock()
     lock = threading.RLock()
@@ -54,27 +67,52 @@ def create_app(config=None, transport=None):
 
     @asynccontextmanager
     async def lifespan(app):
+        diagnostics.start()
+        diagnostics.add(event('relay','startup','started',__version__))
         yield
+        diagnostics.add(event('relay','startup','stopped',__version__))
+        diagnostics.close()
         tesla.http.close()
         chatgpt.http.close()
 
     app = FastAPI(title="Tesla Tempo Relay", version=__version__, docs_url=None,
                   redoc_url=None, openapi_url=None, lifespan=lifespan)
+    app.state.diagnostics = diagnostics
     app.state.tesla = tesla
     app.state.chatgpt = chatgpt
 
     @app.middleware("http")
     async def headers(request, call_next):
-        if request.url.path == "/v1/chatgpt/explain":
+        started = time.monotonic()
+        supplied = request.headers.get('X-Request-ID', '')
+        request_id = supplied if UUID.fullmatch(supplied) else str(uuid.uuid4())
+        request.state.request_id = request_id
+        if request.url.path in ("/v1/chatgpt/explain", "/v1/diagnostics/events"):
+            maximum = 65536 if request.url.path == "/v1/diagnostics/events" else 32768
             size = 0
             parts = []
             async for chunk in request.stream():
                 size += len(chunk)
-                if size > 32768:
+                if size > maximum:
                     return JSONResponse({"error": "request_too_large"}, status_code=413)
                 parts.append(chunk)
             request._body = b"".join(parts)
-        response = await call_next(request)
+        try:
+            response = await call_next(request)
+        except Exception as failure:
+            if getattr(request.state, 'authenticated', False):
+                frames=[f for f in traceback.extract_tb(failure.__traceback__) if Path(f.filename).name in SITES]
+                frame=frames[-1] if frames else None
+                kind=type(failure).__name__
+                diagnostics.add(event('relay',operation(request.url.path),'crash',__version__,request_id,500,(time.monotonic()-started)*1000,
+                                      Path(frame.filename).name if frame else 'unknown', min(frame.lineno,10000) if frame else 0,
+                                      kind if kind in KINDS else 'unknown'))
+            raise
+        if getattr(request.state, 'authenticated', False):
+            diagnostics.add(event('relay',operation(request.url.path),'ok' if response.status_code < 400 else 'http_error',
+                                  __version__,request_id,response.status_code,(time.monotonic()-started)*1000,
+                                  error_kind=getattr(request.state,"diagnostic_kind","none")))
+        response.headers['X-Request-ID'] = request_id
         response.headers["Cache-Control"] = "no-store"
         response.headers["Referrer-Policy"] = "no-referrer"
         response.headers["X-Content-Type-Options"] = "nosniff"
@@ -85,14 +123,17 @@ def create_app(config=None, transport=None):
 
     @app.exception_handler(RequestValidationError)
     async def invalid_request(request, error):
+        request.state.diagnostic_kind="ValidationError"
         return JSONResponse({"error": "invalid_request"}, status_code=422)
 
     @app.exception_handler(ChatGPTError)
     async def chatgpt_error(request, error):
+        request.state.diagnostic_kind="ChatGPTError"
         return JSONResponse({"error": error.code}, status_code=error.status)
 
     @app.exception_handler(UpstreamError)
     async def upstream_error(request, error):
+        request.state.diagnostic_kind="UpstreamError"
         return JSONResponse({"error": error.code}, status_code=error.status,
                             headers={"Retry-After": str(error.retry_after)} if error.status == 429 else None)
 
@@ -107,8 +148,29 @@ def create_app(config=None, transport=None):
             if len(requests) >= 60:
                 raise HTTPException(429, "relay_rate_limited", headers={"Retry-After": "60"})
             requests.append(now)
+        request.state.authenticated = True
 
     protected = [Depends(authenticated)]
+
+    @app.post("/v1/diagnostics/events", dependencies=protected)
+    def diagnostic_upload(payload: DiagnosticReport):
+        if not payload.consent or not UUID.fullmatch(payload.report_id):
+            raise HTTPException(422, "diagnostic_consent_required")
+        try:
+            rows=[validate(row) for row in payload.events]
+            if any(row['source'] != 'android' or row['report_id'] != payload.report_id for row in rows):raise ValueError()
+        except (ValueError,TypeError):raise HTTPException(422,"diagnostic_schema") from None
+        with lock:
+            now=time.monotonic()
+            while uploads and uploads[0] <= now-60:uploads.popleft()
+            if len(uploads)>=5:raise HTTPException(429,"diagnostic_rate_limited")
+            uploads.append(now)
+            for row in rows:diagnostics.add(row)
+        return {"accepted":len(rows),"report_id":payload.report_id}
+
+    @app.get("/v1/diagnostics/export", dependencies=protected)
+    def diagnostic_export():
+        return {"schema":1,"events":diagnostics.snapshot(),"limit":500,"evicted":diagnostics.dropped}
 
     @app.get("/v1/chatgpt/status", dependencies=protected)
     def chatgpt_status():

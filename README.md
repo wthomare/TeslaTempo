@@ -10,9 +10,9 @@ Tesla Tempo AI est un projet d'application Android native pour optimiser la rech
 
 ## État du projet
 
-**Le relais Docker (`0.4.0`) est disponible dans ce dépôt.** Il fonctionne en mode démonstration et implémente OAuth et les lectures Tesla, testés avec un serveur simulé. Il fournit aussi le cahier des charges et l’audit des API.
+**Le relais Docker (`0.5.0`) est disponible dans ce dépôt.** Il fonctionne en mode démonstration et implémente OAuth et les lectures Tesla, testés avec un serveur simulé. Il fournit aussi le cahier des charges et l’audit des API.
 
-L’image se construit localement ; aucune image n’est encore publiée dans un registre. Le [prototype Android 0.8.0](apps/android/README.md) est disponible : tableau de bord, démonstration hors connexion et connexion au relais en lecture seule, thème sombre, simulation Tempo/F20, couleurs et tarifs publiés, profil et calendrier personnels sauvegardés, historique local des simulations, aperçu de programme natif, [relevés de recharge](docs/charge-observations.md) et [assistant ChatGPT sans clé API](docs/chatgpt.md) (connexion intégrée à valider avec chaque compte et partage manuel disponible). Le [plan de développement](docs/development-plan.md) détaille les prochaines étapes. La [chaîne de commandes](docs/command-orchestration.md) est testable hors ligne ; son branchement au véhicule et son activation restent à valider. Le [guide Android](docs/android-distribution.md) couvre la signature, les mises à jour et les rappels locaux. Les fonctionnalités ci-dessous décrivent la cible du projet.
+L’image se construit localement ; aucune image n’est encore publiée dans un registre. Le [prototype Android 0.9.0](apps/android/README.md) est disponible : tableau de bord, démonstration hors connexion et connexion au relais en lecture seule, thème sombre, simulation Tempo/F20, couleurs et tarifs publiés, profil et calendrier personnels sauvegardés, historique local des simulations, aperçu de programme natif, [relevés de recharge](docs/charge-observations.md) et [assistant ChatGPT sans clé API](docs/chatgpt.md) (connexion intégrée à valider avec chaque compte et partage manuel disponible). Le [plan de développement](docs/development-plan.md) détaille les prochaines étapes. La [chaîne de commandes](docs/command-orchestration.md) est testable hors ligne ; son branchement au véhicule et son activation restent à valider. Le [guide Android](docs/android-distribution.md) couvre la signature, les mises à jour et les rappels locaux. Les fonctionnalités ci-dessous décrivent la cible du projet.
 
 ### Essayer le relais
 
@@ -124,3 +124,7 @@ Ne publier aucun jeton, clé privée, mot de passe, VIN ou emplacement précis d
 ## Licence
 
 Le projet est distribué sous [licence Apache 2.0](LICENSE). Projet indépendant, non affilié à Tesla, EDF ou OpenAI.
+
+Les [diagnostics privés](docs/diagnostics.md) rapprochent les événements Android et
+relais. Une stack Loki/Grafana facultative sur le NAS permet leur consultation par
+tunnel SSH ; aucun port de collecte ou d'administration n'est exposé publiquement.

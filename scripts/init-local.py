@@ -13,7 +13,7 @@ def main():
     os.umask(0o077)
     root = Path(__file__).resolve().parent.parent
     secret_dir = root / "secrets"
-    for folder in (secret_dir, root / "data"):
+    for folder in (secret_dir, root / "data", root / "data" / "diagnostics"):
         folder.mkdir(mode=0o700, exist_ok=True)
     values = {
         "relay_api_token": secrets.token_urlsafe(48),

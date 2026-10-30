@@ -57,3 +57,11 @@ installation restent hors du dépôt public.
 
 Les fonctionnalités effectivement livrées sont indiquées dans le
 [CHANGELOG](../CHANGELOG.md) ; cette liste n'est pas une déclaration d'achèvement.
+
+## Diagnostic et exploitation
+
+Android 0.9.0 / relais 0.5.0 : journal technique à vocabulaire fermé, corrélation
+par requête, rapport Android sur consentement et export hors connexion. Stack
+Loki/Grafana optionnelle, stockage borné, contrôle indépendant de disponibilité
+et accès privé par SSH. Voir [le guide](diagnostics.md). Les logs ne remplacent
+pas la relecture d'une commande et ne contiennent pas les données de conduite.
