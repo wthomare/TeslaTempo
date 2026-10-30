@@ -65,6 +65,9 @@ fun PersonalPlannerScreen(state: PersonalState, history: HistoryState, save: (Sa
             PlanStatus.MANUAL_CONFLICT -> Text("Programmation manuelle détectée : aucun nouveau plan proposé. Elle doit être vérifiée dans Tesla.")
             PlanStatus.UNAVAILABLE -> Text("Aucune disponibilité sur les 48 prochaines heures.")
             PlanStatus.DRAFT -> {
+                runCatching { state.tempo.calendar(state.now) }.getOrNull()?.let { calendar ->
+                    NativePreviewCard(c.request, c.result, calendar, c.created, state.now, false)
+                }
                 EstimateCard("Plan économique · brouillon", c.result.optimized, c.request, fictitious = false)
                 EstimateCard("Secours · charge continue", c.result.fallback, c.request, fictitious = false)
                 if (c.result.requiresMultipleWindows) Text("Plusieurs fenêtres nécessaires : programmation autonome Tesla non validée.")

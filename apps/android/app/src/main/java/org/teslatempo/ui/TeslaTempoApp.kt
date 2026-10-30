@@ -25,7 +25,7 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 @Composable
-fun TeslaTempoApp(model: DashboardViewModel, personal: PersonalViewModel, history: HistoryViewModel, assistant: AssistantViewModel) {
+fun TeslaTempoApp(model: DashboardViewModel, personal: PersonalViewModel, history: HistoryViewModel, assistant: AssistantViewModel, observations: ObservationsViewModel) {
     val state by model.state.collectAsStateWithLifecycle()
     val personalState by personal.state.collectAsStateWithLifecycle()
     val historyState by history.state.collectAsStateWithLifecycle()
@@ -54,7 +54,7 @@ fun TeslaTempoApp(model: DashboardViewModel, personal: PersonalViewModel, histor
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Column {
                         Text("TESLA TEMPO", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-                        Text(when (page) { "relay" -> "Mon relais"; "demo", "plan" -> "Planification"; "profile" -> "Mon profil"; "tempo" -> "Tempo"; "history" -> "Historique"; else -> "Ma recharge" }, style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
+                        Text(when (page) { "relay" -> "Mon relais"; "demo", "plan" -> "Planification"; "profile" -> "Mon profil"; "tempo" -> "Tempo"; "history" -> "Historique"; "observations" -> "Relevés"; else -> "Ma recharge" }, style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
                     }
                     TextButton(onClick = { page = if (page == "home") "relay" else "home" }) { Text(if (page != "home") "Accueil" else "Réglages") }
                 }
@@ -66,6 +66,8 @@ fun TeslaTempoApp(model: DashboardViewModel, personal: PersonalViewModel, histor
                 }
                 if (page == "demo") {
                     PlannerScreen(historyState, history::save)
+                } else if (page == "observations") {
+                    ObservationsScreen(state.dashboard?.selected, observations)
                 } else if (page == "history") {
                     HistoryScreen(historyState, history::delete, history::clear, assistant)
                 } else if (page == "profile") {
@@ -80,6 +82,7 @@ fun TeslaTempoApp(model: DashboardViewModel, personal: PersonalViewModel, histor
                 } else {
                     Button(onClick = { page = "plan" }, modifier = Modifier.fillMaxWidth()) { Text("Mon plan personnel") }
                     OutlinedButton(onClick = { page = "profile" }, modifier = Modifier.fillMaxWidth()) { Text("Mon profil et calendrier") }
+                    OutlinedButton(onClick = { page = "observations" }, modifier = Modifier.fillMaxWidth()) { Text("Relevés de recharge") }
                     OutlinedButton(onClick = { page = "history" }, modifier = Modifier.fillMaxWidth()) { Text("Historique des simulations") }
                     TextButton(onClick = { page = "demo" }) { Text("Simuler un plan F20") }
                     state.dashboard?.let { DashboardContent(it, state.relayUrl, state.loading, model::refresh) }

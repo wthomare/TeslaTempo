@@ -8,6 +8,7 @@
 | Identifier les contraintes Tesla/OpenAI | [Audit de faisabilité](feasibility.md) |
 | Configurer Tempo réel et son calendrier | [Tempo et profil personnel](tempo-personal.md) |
 | Utiliser ChatGPT sans clé API | [Connexion et partage](chatgpt.md) |
+| Consulter les relevés du véhicule | [Relevés de recharge](charge-observations.md) |
 | Conserver ses simulations | [Historique local](simulation-history.md) |
 | Comprendre les calculs et essayer F20 | [Moteur Tempo/F20](planner-f20.md) |
 | Exposer le relais en HTTPS | [HTTPS sur TrueNAS et Freebox](https-truenas.md) |

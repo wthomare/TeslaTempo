@@ -62,6 +62,7 @@ fun PlannerScreen(history: HistoryState, save: (SavedPlan) -> Unit) {
         if (comparison.status == PlanStatus.TARGET_REACHED) {
             Text("Objectif déjà atteint · aucune recharge nécessaire.")
         } else {
+            NativePreviewCard(request, comparison, simulation.calendar, request.start, request.start, true)
             EstimateCard("Plan économique · brouillon", comparison.optimized, request)
             EstimateCard("Secours · charge continue", comparison.fallback, request)
             Text("Écart de coût secours − plan : ${amount(comparison.fallback.costEuros - comparison.optimized.costEuros)} €" +

@@ -40,10 +40,10 @@ class RelayGateway(
         .connectTimeout(10, TimeUnit.SECONDS).readTimeout(15, TimeUnit.SECONDS)
         .callTimeout(20, TimeUnit.SECONDS).retryOnConnectionFailure(false).build()
 
-    private fun get(vararg segments: String): JsonObject {
+    private fun get(vararg segments: String, method: String = "GET"): JsonObject {
         val url = base.newBuilder().apply { segments.forEach { addPathSegment(it) } }.build()
         try {
-            http.newCall(Request.Builder().url(url).header("Authorization", "Bearer $token").build()).execute().use { response ->
+            http.newCall(Request.Builder().url(url).header("Authorization", "Bearer $token").method(method, null).build()).execute().use { response ->
                 if (!response.isSuccessful) throw RelayException(when (response.code) {
                     401, 403 -> "Accès refusé. Vérifiez le jeton du relais."
                     404 -> "Véhicule ou endpoint introuvable. Actualisez la liste."
@@ -61,6 +61,30 @@ class RelayGateway(
         } catch (e: RelayException) { throw e
         } catch (_: IOException) { throw RelayException("Connexion impossible. Vérifiez l’adresse, le réseau et le certificat HTTPS.")
         } catch (_: RuntimeException) { throw RelayException("Réponse du relais non reconnue.") }
+    }
+
+    fun observations(vehicleId: String): ObservationHistory {
+        try {
+            val data = get("v1", "vehicles", vehicleId, "charge-observations")
+            check(data.get("coverage").asString == "snapshots_only")
+            check(data.get("total_energy_kwh").isJsonNull && data.get("total_cost_euros").isJsonNull)
+            val rows = data.getAsJsonArray("samples")
+            check(rows.size() <= 300)
+            val samples = rows.map {
+                val row = it.asJsonObject
+                val at = java.time.Instant.parse(row.get("sampled_at").asString)
+                fun optional(key: String, max: Double): Double? = row.get(key)?.takeUnless { v -> v.isJsonNull }?.asDouble?.also { v -> check(v.isFinite() && v in 0.0..max) }
+                ChargeObservation(at, row.get("state").asString, optional("battery_percent", 100.0),
+                    optional("session_counter_kwh", 500.0), optional("current_amps", 1000.0))
+            }
+            return ObservationHistory(data.get("simulated").asBoolean, samples)
+        } catch (e: RelayException) { throw e
+        } catch (_: Exception) { throw RelayException("Relevés non reconnus. Aucune valeur manquante n’a été remplacée par zéro.") }
+    }
+    fun clearObservations(vehicleId: String) {
+        try { check(get("v1", "vehicles", vehicleId, "charge-observations", method = "DELETE").get("cleared").asBoolean) }
+        catch (e: RelayException) { throw e }
+        catch (_: Exception) { throw RelayException("Suppression non confirmée par le relais.") }
     }
 
     override fun load(selectedId: String?): Dashboard {
@@ -96,3 +120,6 @@ private fun JsonObject.number(key: String, range: IntRange): Int? = get(key)?.ta
     if (value !in range) throw IllegalStateException()
     value
 }
+
+data class ChargeObservation(val at: java.time.Instant, val state: String, val battery: Double?, val sessionCounter: Double?, val current: Double?)
+data class ObservationHistory(val simulated: Boolean, val samples: List<ChargeObservation>)

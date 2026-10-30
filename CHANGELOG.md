@@ -1,5 +1,14 @@
 # Historique des versions
 
+## Android 0.7.0 / relais 0.3.0
+
+- Aperçu de programme ponctuel continu : début arrondi, marge de préparation, coûts recalculés, aucune fin forcée à 6 h ; secours choisi séparément.
+- Refus des fenêtres multiples, changements d'heure et disponibilités nécessitant un nouveau branchement dans ce parcours préparatoire.
+- Relevés de charge chiffrés et bornés sur le relais, dédoublonnés sans appel supplémentaire de télémétrie ; consultation et suppression confirmée dans Android.
+- Aucune somme de compteurs de session, aucun coût réel inventé, aucun polling permanent.
+- Image facultative du proxy officiel Tesla depuis une révision et une archive vérifiées ; TLS local distinct, aucun port publié, test hors réseau avec clés fictives.
+- Commandes réelles toujours désactivées ; historique complet de sessions et intégration du transport de signature à poursuivre.
+
 ## Android 0.6.0 / relais 0.2.0
 
 - Connexion ChatGPT OAuth/OIDC avec PKCE, stockage chiffré distinct, transfert privé vers l'hôte et renouvellement sérialisé.

@@ -1,0 +1,32 @@
+# Optional development component. No relay command route is enabled by this file.
+# Use with the root Compose file; requires dedicated TLS secrets generated beforehand.
+services:
+  command-proxy:
+    image: teslatempo-command-proxy:0.1.0
+    build:
+      context: ./services/command-proxy
+    profiles: [command-proxy]
+    # Share the relay namespace, but listen ONLY on loopback. No port publication.
+    network_mode: service:relay
+    depends_on:
+      relay:
+        condition: service_healthy
+    user: "${RELAY_UID:-1000}:${RELAY_GID:-1000}"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+    pids_limit: 64
+    mem_limit: 128m
+    cpus: 0.5
+    environment:
+      TESLA_HTTP_PROXY_HOST: localhost
+      TESLA_HTTP_PROXY_PORT: "4443"
+      TESLA_HTTP_PROXY_TIMEOUT: 10s
+      TESLA_HTTP_PROXY_TLS_CERT: /run/secrets/proxy_tls_cert.pem
+      TESLA_HTTP_PROXY_TLS_KEY: /run/secrets/proxy_tls_key.pem
+      TESLA_KEY_FILE: /run/secrets/tesla_private_key.pem
+    volumes:
+      - ./secrets/proxy_tls_cert.pem:/run/secrets/proxy_tls_cert.pem:ro
+      - ./secrets/proxy_tls_key.pem:/run/secrets/proxy_tls_key.pem:ro
+      - ./secrets/tesla_private_key.pem:/run/secrets/tesla_private_key.pem:ro

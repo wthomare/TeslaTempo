@@ -1,6 +1,6 @@
 # Relais Docker V1 — installation et validation
 
-Version `0.2.0`. Instance personnelle, un compte Tesla, un processus.
+Version `0.3.0`. Instance personnelle, un compte Tesla, un processus.
 
 ## Ce qui est livré
 
@@ -187,10 +187,12 @@ python3 -m venv .venv
 .venv/bin/pip install -r requirements-dev.txt
 .venv/bin/python -m pytest -q
 cd ../..
-docker build -t teslatempo-relay:0.2.0 services/relay
+docker build -t teslatempo-relay:0.3.0 services/relay
 python3 scripts/check-running.py
 ```
 
 Les 25 tests ne contactent jamais Tesla : ils vérifient auth, OAuth, expiration/rejeu, chiffrement, renouvellement concurrent, contrôle des véhicules, erreurs et limitation de requêtes. Le dernier script suppose Compose déjà démarré en mode mock sur le port local 8080 ; il vérifie le conteneur réellement en cours d'exécution. La vérification Docker utilise uniquement des secrets locaux générés pour cette instance. Le workflow GitHub Actions reprend ces contrôles sans publier d'image ni contacter Tesla.
 
 Avant les commandes réelles, chaque installation doit valider HTTPS, l'enregistrement Tesla et les réponses OAuth/lectures du compte, puis à intégrer le proxy signé et le contrôle des plans. Voir [l'audit](feasibility.md).
+
+Les lectures réelles peuvent conserver des [relevés chiffrés](charge-observations.md), sans collecte permanente ni total de sessions déduit.

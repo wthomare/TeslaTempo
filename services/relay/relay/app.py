@@ -2,6 +2,7 @@ import hashlib
 import hmac
 import logging
 import secrets
+import sqlite3
 import threading
 import time
 from collections import deque
@@ -27,6 +28,7 @@ class ExplanationRequest(BaseModel):
 from relay import __version__
 from relay.config import Config
 from relay.store import Store
+from relay.observations import Observations
 from relay.tesla import SCOPES, Tesla, UpstreamError
 
 
@@ -38,6 +40,7 @@ def create_app(config=None, transport=None):
     config = config or Config.from_env()
     config.validate()
     store = Store(config.data_dir, config.encryption_key)
+    observations = Observations(config.data_dir, config.encryption_key)
     tesla = Tesla(config, store, transport)
     chatgpt = ChatGPT(ChatGPTStore(config.data_dir / "chatgpt", config.encryption_key), transport)
     explanations = deque()
@@ -251,7 +254,39 @@ def create_app(config=None, transport=None):
         row = data.get("response")
         if not isinstance(row, dict):
             raise UpstreamError(502, "invalid_tesla_response")
-        return {"simulated": False, "charge_state": row.get("charge_state"),
+        try:
+            recorded = observations.record(vehicle_id, row.get("charge_state"))
+        except (OSError, sqlite3.Error):
+            recorded = False  # Storage failure must not prevent the current read.
+        return {"simulated": False, "observation_saved": recorded, "charge_state": row.get("charge_state"),
                 "charge_schedule_data": row.get("charge_schedule_data")}
+
+    def owned_vehicle(vehicle_id):
+        if config.mode == "mock":
+            if vehicle_id != "demo": raise HTTPException(404, "vehicle_not_found")
+            return
+        if not vehicle_id.isascii() or not vehicle_id.isdigit() or len(vehicle_id) > 30:
+            raise HTTPException(404, "vehicle_not_found")
+        if vehicle_id not in {str(row.get("id")) for row in vehicles() if isinstance(row, dict)}:
+            raise HTTPException(404, "vehicle_not_found")
+
+    @app.get("/v1/vehicles/{vehicle_id}/charge-observations", dependencies=protected)
+    def charge_observations(vehicle_id: str):
+        owned_vehicle(vehicle_id)
+        try:
+            samples = [] if config.mode == "mock" else observations.list(vehicle_id)
+        except Exception:
+            raise HTTPException(503, "observation_storage_unavailable") from None
+        return {"simulated": config.mode == "mock", "coverage": "snapshots_only", "samples": samples,
+                "total_energy_kwh": None, "total_cost_euros": None, "limit_per_vehicle": 300}
+
+    @app.delete("/v1/vehicles/{vehicle_id}/charge-observations", dependencies=protected)
+    def clear_observations(vehicle_id: str):
+        if config.mode == "mock":
+            if vehicle_id != "demo": raise HTTPException(404, "vehicle_not_found")
+        elif not vehicle_id.isascii() or not vehicle_id.isdigit() or len(vehicle_id) > 30:
+            raise HTTPException(404, "vehicle_not_found")
+        if config.mode != "mock": observations.clear(vehicle_id)
+        return {"cleared": True, "simulated": config.mode == "mock"}
 
     return app

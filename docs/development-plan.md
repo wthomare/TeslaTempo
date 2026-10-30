@@ -16,8 +16,14 @@ Les validations simulées et les validations sur véhicule réel restent distinc
 - Lot 1 : code du relais et Android livré, tests simulés OAuth/inférence et tests
   d'interface. L'authentification et l'inférence réelles restent à valider par compte.
 - Lot 2 : [politique de préparation et confirmation hors ligne](charging-preparation.md)
-  implémentée et testée. Adaptateur Tesla et écran de confirmation à réaliser.
-- Lots 3 à 5 : à réaliser ; les étapes sur véhicule ne sont pas remplacées par des simulations.
+  implémentée et testée. Aperçu natif économique/secours dans Android ; adaptateur
+  de commandes et confirmation réelle à réaliser.
+- Lot 3 : image du proxy officiel et démarrage TLS hors réseau testés ; intégration
+  du transport et validation sur véhicule encore nécessaires.
+- Lot 4 : relevés ponctuels chiffrés et consultation Android disponibles ; historique
+  de sessions et factures encore à réaliser.
+- Lot 5 : améliorations progressives ; notifications et distribution des mises à jour
+  restent à réaliser. Les essais sur véhicule ne sont pas remplacés par des simulations.
 
 ## Ordre de travail
 
