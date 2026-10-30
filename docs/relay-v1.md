@@ -1,6 +1,6 @@
 # Relais Docker V1 — installation et validation
 
-Version `0.1.0`, 29 octobre 2026. Instance personnelle, un compte Tesla, un processus.
+Version `0.2.0`. Instance personnelle, un compte Tesla, un processus.
 
 ## Ce qui est livré
 
@@ -12,7 +12,7 @@ Version `0.1.0`, 29 octobre 2026. Instance personnelle, un compte Tesla, un proc
 - Publication de la clé publique P-256 au chemin Tesla officiel.
 - Jeton d'accès personnel au relais, cache de lecture de 30 secondes et limite de 60 requêtes authentifiées par minute.
 
-Les commandes véhicule, le proxy de signature, l'historique Supercharger et OpenAI ne sont pas encore implémentés. Le [socle Android](../apps/android/README.md) peut lire ce relais. Aucun appel de charge n'est exposé. Le mode Tesla est testé avec des réponses simulées, pas encore sur un compte réel. Une image locale est construite ; aucune image n'est publiée dans un registre.
+Les commandes véhicule, le proxy de signature, l'historique Supercharger ne sont pas encore implémentés. L’assistant facultatif est décrit dans le [guide ChatGPT](chatgpt.md). Le [socle Android](../apps/android/README.md) peut lire ce relais. Aucun appel de charge n'est exposé. Les tests automatisés simulent Tesla ; l’accès réel doit être validé pour chaque instance. Une image locale est construite ; aucune image n'est publiée dans un registre.
 
 ## 1. Essayer localement sans compte Tesla
 
@@ -187,7 +187,7 @@ python3 -m venv .venv
 .venv/bin/pip install -r requirements-dev.txt
 .venv/bin/python -m pytest -q
 cd ../..
-docker build -t teslatempo-relay:0.1.0 services/relay
+docker build -t teslatempo-relay:0.2.0 services/relay
 python3 scripts/check-running.py
 ```
 

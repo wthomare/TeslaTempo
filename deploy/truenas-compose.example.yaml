@@ -1,8 +1,8 @@
 # TrueNAS Apps > Install via YAML. Replace /mnt/POOL and UID:GID before use.
-# Build teslatempo-relay:0.1.0 on the NAS first; no registry pull is configured.
+# Build teslatempo-relay:0.2.0 on the NAS first; no registry pull is configured.
 services:
   relay:
-    image: teslatempo-relay:0.1.0
+    image: teslatempo-relay:0.2.0
     pull_policy: never
     user: "1000:1000"
     restart: unless-stopped

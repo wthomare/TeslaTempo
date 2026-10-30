@@ -47,7 +47,7 @@ TeslaTempo/
 | Vérifier le mode mock | Racine | `python3 scripts/check-running.py` |
 | Installer les dépendances de test | `services/relay/`, environnement virtuel actif | `pip install -r requirements-dev.txt` |
 | Tester le relais | `services/relay/`, environnement virtuel actif | `python -m pytest -q` |
-| Construire uniquement l'image | Racine | `docker build -t teslatempo-relay:0.1.0 services/relay` |
+| Construire uniquement l'image | Racine | `docker build -t teslatempo-relay:0.2.0 services/relay` |
 
 | Compiler et tester Android | `apps/android/` | `./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug` |
 

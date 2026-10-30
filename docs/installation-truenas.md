@@ -129,7 +129,7 @@ Sur le **NAS**, dans le répertoire neuf :
 cd /mnt/POOL/teslatempo/source
 tar -xzf ../source.tar.gz
 python3 scripts/init-local.py
-sudo docker build -t teslatempo-relay:0.1.0 services/relay
+sudo docker build -t teslatempo-relay:0.2.0 services/relay
 ```
 
 Ne pas lancer `init-local.py` avec `sudo`. Il génère `secrets/`, `data/` et `.env`

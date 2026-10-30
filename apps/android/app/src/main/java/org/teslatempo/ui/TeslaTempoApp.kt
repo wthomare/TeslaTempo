@@ -25,7 +25,7 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 @Composable
-fun TeslaTempoApp(model: DashboardViewModel, personal: PersonalViewModel, history: HistoryViewModel) {
+fun TeslaTempoApp(model: DashboardViewModel, personal: PersonalViewModel, history: HistoryViewModel, assistant: AssistantViewModel) {
     val state by model.state.collectAsStateWithLifecycle()
     val personalState by personal.state.collectAsStateWithLifecycle()
     val historyState by history.state.collectAsStateWithLifecycle()
@@ -67,7 +67,7 @@ fun TeslaTempoApp(model: DashboardViewModel, personal: PersonalViewModel, histor
                 if (page == "demo") {
                     PlannerScreen(historyState, history::save)
                 } else if (page == "history") {
-                    HistoryScreen(historyState, history::delete, history::clear)
+                    HistoryScreen(historyState, history::delete, history::clear, assistant)
                 } else if (page == "profile") {
                     ProfileScreen(personalState) { value -> personal.save(value) { page = "home" } }
                 } else if (page == "tempo") {

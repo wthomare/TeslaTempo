@@ -1,4 +1,4 @@
-# Application Android Tesla Tempo — prototype 0.5.0
+# Application Android Tesla Tempo — prototype 0.6.0
 
 Application native Kotlin, Jetpack Compose et Material 3. Android 13 minimum (API 33), compilation/cible API 36. APK privé de développement, aucune publication sur Google Play.
 
@@ -14,7 +14,9 @@ Application native Kotlin, Jetpack Compose et Material 3. Android 13 minimum (AP
 
 **Nouveau en 0.3.0 :** [couleurs et tarifs Tempo publiés, cache DataStore, profil personnel et calendrier](../../docs/tempo-personal.md). L'accueil propose « Mon profil et calendrier », « Mon plan personnel » et les données Tempo avec leur provenance. Le profil exige une capacité de batterie renseignée par l'utilisateur ; aucune capacité de Model Y n'est supposée.
 
-**Nouveau en 0.5.0 :** [résumé à partager vers ChatGPT sans clé API](../../docs/chatgpt.md), avec aperçu et choix explicite. La connexion ChatGPT intégrée reste à développer.
+**Nouveau en 0.6.0 :** assistant via le relais avec choix de modèle, aperçu avant envoi, réponse complète et déconnexion ; socle hors ligne de contrôle des futurs programmes. Voir [ChatGPT](../../docs/chatgpt.md) et [préparation des commandes](../../docs/charging-preparation.md).
+
+**Depuis 0.5.0 :** [résumé à partager vers ChatGPT sans clé API](../../docs/chatgpt.md), avec aperçu et choix explicite.
 
 **Depuis 0.4.0 :** [historique local des simulations](../../docs/simulation-history.md), enregistrement explicite des calculs, consultation hors connexion et suppression avec confirmation.
 

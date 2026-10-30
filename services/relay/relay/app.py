@@ -9,7 +9,20 @@ from contextlib import asynccontextmanager
 from urllib.parse import urlencode
 
 from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
+
+from pydantic import BaseModel, Field, ConfigDict, StrictBool
+from relay.chatgpt import ChatGPT, ChatGPTError, ChatGPTStore
+
+
+class ExplanationRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    model: str = Field(min_length=1, max_length=200)
+    summary: str = Field(min_length=1, max_length=6000)
+    account: str = Field(min_length=1, max_length=256)
+    consent: StrictBool
+
 
 from relay import __version__
 from relay.config import Config
@@ -26,6 +39,9 @@ def create_app(config=None, transport=None):
     config.validate()
     store = Store(config.data_dir, config.encryption_key)
     tesla = Tesla(config, store, transport)
+    chatgpt = ChatGPT(ChatGPTStore(config.data_dir / "chatgpt", config.encryption_key), transport)
+    explanations = deque()
+    explanation_lock = threading.Lock()
     lock = threading.RLock()
     tickets, flows = {}, {}
     requests = deque()
@@ -37,13 +53,24 @@ def create_app(config=None, transport=None):
     async def lifespan(app):
         yield
         tesla.http.close()
+        chatgpt.http.close()
 
     app = FastAPI(title="Tesla Tempo Relay", version=__version__, docs_url=None,
                   redoc_url=None, openapi_url=None, lifespan=lifespan)
     app.state.tesla = tesla
+    app.state.chatgpt = chatgpt
 
     @app.middleware("http")
     async def headers(request, call_next):
+        if request.url.path == "/v1/chatgpt/explain":
+            size = 0
+            parts = []
+            async for chunk in request.stream():
+                size += len(chunk)
+                if size > 32768:
+                    return JSONResponse({"error": "request_too_large"}, status_code=413)
+                parts.append(chunk)
+            request._body = b"".join(parts)
         response = await call_next(request)
         response.headers["Cache-Control"] = "no-store"
         response.headers["Referrer-Policy"] = "no-referrer"
@@ -52,6 +79,14 @@ def create_app(config=None, transport=None):
         if config.secure_cookie:
             response.headers["Strict-Transport-Security"] = "max-age=31536000"
         return response
+
+    @app.exception_handler(RequestValidationError)
+    async def invalid_request(request, error):
+        return JSONResponse({"error": "invalid_request"}, status_code=422)
+
+    @app.exception_handler(ChatGPTError)
+    async def chatgpt_error(request, error):
+        return JSONResponse({"error": error.code}, status_code=error.status)
 
     @app.exception_handler(UpstreamError)
     async def upstream_error(request, error):
@@ -71,6 +106,36 @@ def create_app(config=None, transport=None):
             requests.append(now)
 
     protected = [Depends(authenticated)]
+
+    @app.get("/v1/chatgpt/status", dependencies=protected)
+    def chatgpt_status():
+        return chatgpt.status()
+
+    @app.get("/v1/chatgpt/models", dependencies=protected)
+    def chatgpt_models():
+        return {"models": chatgpt.models()}
+
+    @app.delete("/v1/chatgpt/connection", dependencies=protected)
+    def chatgpt_disconnect():
+        return chatgpt.disconnect()
+
+    @app.post("/v1/chatgpt/explain", dependencies=protected)
+    def explain(payload: ExplanationRequest):
+        if not payload.consent:
+            raise HTTPException(422, "explicit_consent_required")
+        if not explanation_lock.acquire(blocking=False):
+            raise HTTPException(429, "chatgpt_request_in_progress")
+        try:
+            now = time.monotonic()
+            while explanations and explanations[0] <= now - 60:
+                explanations.popleft()
+            if len(explanations) >= 5:
+                raise HTTPException(429, "chatgpt_rate_limited")
+            explanations.append(now)
+            return {"text": chatgpt.explain(payload.model, payload.summary, payload.account), "completed": True,
+                    "vehicle_commands_enabled": False}
+        finally:
+            explanation_lock.release()
 
     @app.get("/healthz")
     def health():

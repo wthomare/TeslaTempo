@@ -28,7 +28,7 @@ fun SaveSimulation(plan: SavedPlan, state: HistoryState, save: (SavedPlan) -> Un
 }
 
 @Composable
-fun HistoryScreen(state: HistoryState, delete: (String) -> Unit, clear: () -> Unit) {
+fun HistoryScreen(state: HistoryState, delete: (String) -> Unit, clear: () -> Unit, assistant: AssistantViewModel) {
     var selected by rememberSaveable { mutableStateOf<String?>(null) }
     var removal by rememberSaveable { mutableStateOf<String?>(null) }
     Text("Simulations enregistrées", style = MaterialTheme.typography.titleLarge)
@@ -53,6 +53,7 @@ fun HistoryScreen(state: HistoryState, delete: (String) -> Unit, clear: () -> Un
         (current.optimized.slots + current.fallback.slots).map { it.price.tariffId to it.price.source }.distinct().forEach { (id, source) ->
             Text("Tarif utilisé : $id\nSource au calcul : $source", style = MaterialTheme.typography.bodySmall)
         }
+        AssistantExplanation(current, assistant)
         AssistantShare(current)
         OutlinedButton(onClick = { removal = current.id }, enabled = !state.busy) { Text("Supprimer cette simulation") }
     } else {

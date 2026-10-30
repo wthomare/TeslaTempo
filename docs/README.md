@@ -2,10 +2,12 @@
 
 | Pour… | Lire… |
 | --- | --- |
+| Suivre les prochaines étapes | [Plan de développement](development-plan.md) |
+| Préparer les futures commandes | [Contrôles hors ligne](charging-preparation.md) |
 | Comprendre le produit et ses règles | [Cahier des charges](specification.md) |
 | Identifier les contraintes Tesla/OpenAI | [Audit de faisabilité](feasibility.md) |
 | Configurer Tempo réel et son calendrier | [Tempo et profil personnel](tempo-personal.md) |
-| Utiliser ChatGPT sans clé API | [Partage et connexion prévue](chatgpt.md) |
+| Utiliser ChatGPT sans clé API | [Connexion et partage](chatgpt.md) |
 | Conserver ses simulations | [Historique local](simulation-history.md) |
 | Comprendre les calculs et essayer F20 | [Moteur Tempo/F20](planner-f20.md) |
 | Exposer le relais en HTTPS | [HTTPS sur TrueNAS et Freebox](https-truenas.md) |

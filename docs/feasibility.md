@@ -134,10 +134,10 @@ Source : [function calling](https://developers.openai.com/api/docs/guides/functi
 Source : [authentification OpenAI](https://developers.openai.com/api/reference/overview).
 
 **Choix actuel :** privilégier l'usage sans clé API. Android permet un partage
-volontaire d'agrégats vers ChatGPT. Pour l'intégration future, le parcours officiel
+volontaire d'agrégats vers ChatGPT. Pour l'intégration, le parcours officiel
 Sign in with ChatGPT permet aux comptes Plus et Pro éligibles d'utiliser leur
 abonnement avec OAuth. L'éligibilité, les scopes et les quotas restent à tester ;
-ce parcours n'est pas encore implémenté. Aucun projet API payant n'est requis pour
+ce parcours est implémenté et testé avec des réponses simulées, à valider avec chaque compte. Aucun projet API payant n'est requis pour
 le partage manuel. Voir [le guide ChatGPT](chatgpt.md) et le
 [quickstart officiel OpenAI](https://developers.openai.com/siwc/quickstart).
 
@@ -178,7 +178,7 @@ Voir [docs/self-hosting.md](self-hosting.md) pour le contrat de déploiement. Le
 - [ ] Consulter les prix et la remise du compte, ajouter le paiement et fixer le plafond souhaité avant les appels réels.
 - [ ] Fournir uniquement le statut de validation de l'application, le domaine et les éventuels messages d'erreur expurgés. Le client ID est public mais n'est pas nécessaire dans le chat à ce stade.
 - [ ] Déposer soi-même le secret Tesla dans le coffre de l'hébergement une fois celui-ci préparé. La génération de la clé de signature, la publication de sa partie publique et l'enregistrement régional seront guidés à ce moment-là ; aucune clé privée ne doit être envoyée dans le chat.
-- [ ] Pour GPT, essayer le partage volontaire sans clé API ; valider ensuite le parcours Sign in with ChatGPT quand il sera intégré. Voir [le guide](chatgpt.md).
+- [ ] Pour GPT, essayer le partage volontaire sans clé API ; valider ensuite le parcours Sign in with ChatGPT sur son instance. Voir [le guide](chatgpt.md).
 
 ### Plus tard — essais réels encadrés
 

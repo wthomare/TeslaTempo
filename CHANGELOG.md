@@ -1,5 +1,13 @@
 # Historique des versions
 
+## Android 0.6.0 / relais 0.2.0
+
+- Connexion ChatGPT OAuth/OIDC avec PKCE, stockage chiffré distinct, transfert privé vers l'hôte et renouvellement sérialisé.
+- Catalogue de modèles du compte, génération bornée sans outils, consentement explicite et gestion des flux interrompus ; aucun repli sur une clé API payante.
+- Android : choix du modèle, aperçu des agrégats, affichage de la réponse complète et déconnexion avec état de révocation.
+- Préparation hors ligne des futures commandes : fraîcheur, conflits, confirmation liée au plan et distinction entre accusé de réception et relecture confirmée.
+- Tests simulés et documentation d'installation ; accès ChatGPT réel à valider par compte. Commandes Tesla toujours désactivées.
+
 ## Android 0.5.0
 
 - Aperçu explicite d'un résumé agrégé à copier ou partager vers ChatGPT depuis une simulation archivée.

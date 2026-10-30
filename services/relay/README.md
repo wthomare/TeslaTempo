@@ -28,7 +28,7 @@ python3 -m venv .venv
 Depuis ce dossier :
 
 ```bash
-docker build -t teslatempo-relay:0.1.0 .
+docker build -t teslatempo-relay:0.2.0 .
 ```
 
 Le contexte Docker est limité à ce service : l'application Android et les secrets de déploiement à la racine ne sont pas envoyés au moteur de construction.
