@@ -12,7 +12,7 @@ Tesla Tempo AI est un projet d'application Android native pour optimiser la rech
 
 **Le relais Docker V1 (`0.1.0`) est disponible dans ce dépôt.** Il fonctionne en mode démonstration et implémente OAuth et les lectures Tesla, testés avec un serveur simulé. Il fournit aussi le cahier des charges et l’audit des API.
 
-L’image se construit localement ; aucune image n’est encore publiée dans un registre. Le [prototype Android 0.4.0](apps/android/README.md) est disponible : tableau de bord, démonstration hors connexion et connexion au relais en lecture seule, thème sombre, simulation Tempo/F20, couleurs et tarifs publiés, profil et calendrier personnels sauvegardés, historique local des simulations. Les commandes signées et l’intégration sur véhicule réel restent à développer ou valider. Les fonctionnalités ci-dessous décrivent la cible du projet.
+L’image se construit localement ; aucune image n’est encore publiée dans un registre. Le [prototype Android 0.5.0](apps/android/README.md) est disponible : tableau de bord, démonstration hors connexion et connexion au relais en lecture seule, thème sombre, simulation Tempo/F20, couleurs et tarifs publiés, profil et calendrier personnels sauvegardés, historique local des simulations et [résumé à partager vers ChatGPT sans clé API](docs/chatgpt.md). Les commandes signées et l’intégration sur véhicule réel restent à développer ou valider. Les fonctionnalités ci-dessous décrivent la cible du projet.
 
 ### Essayer le relais
 

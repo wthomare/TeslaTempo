@@ -133,9 +133,13 @@ Source : [function calling](https://developers.openai.com/api/docs/guides/functi
 
 Source : [authentification OpenAI](https://developers.openai.com/api/reference/overview).
 
-**À TESTER :** créer le projet API, vérifier facturation/crédits et modèles accessibles, puis un appel Responses minimal et un outil de simulation sans action Tesla. Aucun identifiant de modèle n'est fixé dans cet audit ; le nom affiché dans ChatGPT ne suffit pas. Le coût sera calculé avec les tokens d'entrée/sortie et le tarif du modèle choisi ; ne pas annoncer un forfait avant ce choix. Configurer un plafond de dépense, distinguer alertes et limites bloquantes, et ajouter une limite côté relais.
-
-Sources : [tarifs OpenAI](https://developers.openai.com/api/docs/pricing), [quotas et limites de dépense](https://developers.openai.com/api/docs/guides/rate-limits).
+**Choix actuel :** privilégier l'usage sans clé API. Android permet un partage
+volontaire d'agrégats vers ChatGPT. Pour l'intégration future, le parcours officiel
+Sign in with ChatGPT permet aux comptes Plus et Pro éligibles d'utiliser leur
+abonnement avec OAuth. L'éligibilité, les scopes et les quotas restent à tester ;
+ce parcours n'est pas encore implémenté. Aucun projet API payant n'est requis pour
+le partage manuel. Voir [le guide ChatGPT](chatgpt.md) et le
+[quickstart officiel OpenAI](https://developers.openai.com/siwc/quickstart).
 
 Proposition : conversations locales, requêtes `store: false`, données agrégées, sans VIN, secrets ni coordonnées précises. Ce paramètre ne promet pas l'absence de toute rétention : la politique distingue état applicatif, surveillance des abus et exceptions. Aucun contrat Zero Data Retention n'est supposé.
 
@@ -174,7 +178,7 @@ Voir [docs/self-hosting.md](self-hosting.md) pour le contrat de déploiement. Le
 - [ ] Consulter les prix et la remise du compte, ajouter le paiement et fixer le plafond souhaité avant les appels réels.
 - [ ] Fournir uniquement le statut de validation de l'application, le domaine et les éventuels messages d'erreur expurgés. Le client ID est public mais n'est pas nécessaire dans le chat à ce stade.
 - [ ] Déposer soi-même le secret Tesla dans le coffre de l'hébergement une fois celui-ci préparé. La génération de la clé de signature, la publication de sa partie publique et l'enregistrement régional seront guidés à ce moment-là ; aucune clé privée ne doit être envoyée dans le chat.
-- [ ] Pour GPT, ouvrir un compte/projet sur [OpenAI Platform](https://platform.openai.com/), vérifier les conditions de facturation et définir le plafond. Créer la clé seulement lorsque son coffre est prêt, puis l'y saisir directement. Cette étape peut attendre la validation Tesla.
+- [ ] Pour GPT, essayer le partage volontaire sans clé API ; valider ensuite le parcours Sign in with ChatGPT quand il sera intégré. Voir [le guide](chatgpt.md).
 
 ### Plus tard — essais réels encadrés
 

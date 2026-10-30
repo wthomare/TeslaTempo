@@ -13,6 +13,26 @@ class HistoryTest {
         return SavedPlan.capture(demo.request, ChargingOptimizer().calculate(demo.request, demo.calendar),
             PlanOrigin.DEMO, Instant.parse("2026-11-02T12:00:00Z"))
     }
+    @Test fun `assistant summary only exports aggregate allowlisted fields`() {
+        val saved = snapshot()
+        val privateSource = "PRIVATE_SOURCE_DO_NOT_EXPORT"
+        val changed = saved.copy(optimized = saved.optimized.copy(slots = saved.optimized.slots.map {
+            it.copy(price = it.price.copy(source = privateSource, tariffId = "PRIVATE_TARIFF"))
+        }))
+        val text = assistantSummary(changed)
+        listOf(saved.id, saved.calculatedAt, saved.request.start, saved.request.departure,
+            privateSource, "PRIVATE_TARIFF", "2026-11-02").forEach { assertFalse(text.contains(it)) }
+        assertTrue(text.contains("Démonstration fictive"))
+        assertTrue(text.contains("Couleur Tempo inconnue dans au moins un créneau retenu : oui"))
+        assertTrue(text.contains("pas une recharge mesurée"))
+    }
+    @Test fun `assistant summary preserves shortfall and distinguishes personal from demo`() {
+        val partial = snapshot(DemoScenario.LEAVE).copy(origin = PlanOrigin.PERSONAL)
+        val text = assistantSummary(partial)
+        assertTrue(text.contains("Simulation personnelle"))
+        assertTrue(text.contains(String.format(java.util.Locale.FRANCE, "%.2f", partial.optimized.missingGridKwh) + " kWh"))
+        assertTrue(assistantSummary(snapshot(soc = 90.0)).contains("coût estimé 0,00 €"))
+    }
     @Test fun `roundtrip preserves costs times unknown colors and provenance without recalculation`() {
         val saved = snapshot()
         val loaded = HistoryCodec.decode(HistoryCodec.encode(listOf(saved))).single()

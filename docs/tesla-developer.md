@@ -9,6 +9,22 @@ L'installation Docker est décrite dans le [manuel TrueNAS](installation-truenas
 Ce document explique les démarches à effectuer soi-même auprès de Tesla.
 Chaque utilisateur dispose de sa propre application Developer et de ses propres secrets.
 
+## Peut-on commencer sans véhicule ?
+
+Le [parcours officiel Tesla](https://developer.tesla.com/docs/fleet-api/getting-started/what-is-fleet-api)
+ne mentionne ni plaque d'immatriculation ni VIN pour demander la création d'une
+application Developer. Il distingue l'inscription de l'application, la publication
+de sa clé et l'autorisation du véhicule. On peut donc préparer le compte, le domaine
+et la demande avant de disposer du véhicule ; l'acceptation reste du ressort de Tesla.
+
+Si un écran demande une plaque ou un VIN, vérifier son intitulé et son adresse :
+il peut concerner l'ajout d'un véhicule au compte plutôt que la création de
+l'application. Ne pas inventer ces informations. Les lectures réelles et l'appairage
+attendent qu'un véhicule soit accessible avec les droits nécessaires.
+
+Tesla Developer concerne uniquement Tesla. L'assistant ChatGPT utilise un parcours
+séparé décrit dans [ChatGPT sans clé API](chatgpt.md).
+
 ## 1. Préparer le compte et le domaine
 
 Se connecter au [portail Tesla Developer](https://developer.tesla.com/) avec un

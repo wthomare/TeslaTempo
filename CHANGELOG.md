@@ -1,5 +1,12 @@
 # Historique des versions
 
+## Android 0.5.0
+
+- Aperçu explicite d'un résumé agrégé à copier ou partager vers ChatGPT depuis une simulation archivée.
+- Export sans dates, activités, identifiants ni secrets ; aucun envoi automatique ni commande véhicule.
+- Clarification du parcours Tesla Developer avant association d'un véhicule et documentation du choix ChatGPT sans clé API.
+- La connexion intégrée Sign in with ChatGPT reste à implémenter.
+
 ## Android 0.4.0
 
 - Historique local des simulations personnelles et de démonstration, avec enregistrement explicite.

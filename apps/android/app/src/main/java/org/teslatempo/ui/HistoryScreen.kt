@@ -53,6 +53,7 @@ fun HistoryScreen(state: HistoryState, delete: (String) -> Unit, clear: () -> Un
         (current.optimized.slots + current.fallback.slots).map { it.price.tariffId to it.price.source }.distinct().forEach { (id, source) ->
             Text("Tarif utilisé : $id\nSource au calcul : $source", style = MaterialTheme.typography.bodySmall)
         }
+        AssistantShare(current)
         OutlinedButton(onClick = { removal = current.id }, enabled = !state.busy) { Text("Supprimer cette simulation") }
     } else {
         if (state.ready && state.plans.isEmpty() && !state.unreadable) Text("Aucune simulation enregistrée. Calculez un plan personnel ou une démonstration, puis choisissez de l’enregistrer.")

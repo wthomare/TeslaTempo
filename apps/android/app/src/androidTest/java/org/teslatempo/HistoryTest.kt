@@ -32,6 +32,18 @@ class HistoryTest {
         compose.onNodeWithText("Démonstration fictive").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Consulter la simulation").performScrollTo().performClick()
         compose.onNodeWithText("Estimation économique archivée").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Préparer pour ChatGPT").performScrollTo().performClick()
+        compose.onNodeWithText("Résumé à partager").assertIsDisplayed()
+        compose.onNodeWithText("Explique en français", substring = true).assertExists()
+        compose.onNodeWithText("Annuler").performClick()
+        assertEquals(1, runBlocking { store.load() }.size)
+        compose.onNodeWithText("Préparer pour ChatGPT").performScrollTo().performClick()
+        compose.onNodeWithText("Copier").performClick()
+        compose.waitUntil(5_000) { compose.activity.hasWindowFocus() }
+        compose.runOnIdle {
+            val clipboard = compose.activity.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+            assertEquals(assistantSummary(runBlocking { store.load() }.single()), clipboard.primaryClip!!.getItemAt(0).text.toString())
+        }
         compose.onNodeWithText("Supprimer cette simulation").performScrollTo().performClick()
         compose.onNodeWithText("Annuler").performClick()
         assertEquals(1, runBlocking { store.load() }.size)
