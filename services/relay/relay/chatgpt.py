@@ -271,6 +271,7 @@ class ChatGPT:
 def completed_text(chunks):
     """Bound stream memory and time; only a completed response is returned."""
     buffer = b''; size = 0; started = time.monotonic(); data = []
+    text_parts = {}; text_size = 0
     for chunk in chunks:
         size += len(chunk)
         if size > 1_048_576 or time.monotonic() - started > 60: raise ChatGPTError('chatgpt_response_limit', 502)
@@ -284,6 +285,18 @@ def completed_text(chunks):
             data = []
             if not isinstance(event, dict): raise ChatGPTError('invalid_chatgpt_stream', 502)
             kind = event.get('type')
+            if kind in ['response.output_item.added', 'response.output_item.done']:
+                item = event.get('item', {})
+                if not isinstance(item, dict) or item.get('type') not in ['message', 'reasoning']:
+                    raise ChatGPTError('unexpected_chatgpt_output', 502)
+            if kind == 'response.output_text.delta':
+                delta = event.get('delta')
+                indices = (event.get('output_index', 0), event.get('content_index', 0))
+                if not isinstance(delta, str) or not all(isinstance(i, int) and 0 <= i <= 100 for i in indices):
+                    raise ChatGPTError('invalid_chatgpt_stream', 502)
+                text_size += len(delta)
+                if text_size > 16000: raise ChatGPTError('chatgpt_response_limit', 502)
+                text_parts.setdefault(indices, []).append(delta)
             if kind in ['error', 'response.failed', 'response.incomplete']:
                 error = event.get('response', {}).get('error', {}) if isinstance(event.get('response', {}), dict) else {}
                 if isinstance(error, dict) and error.get('code') in ['subscription_sharing_usage_limit_exceeded', 'subscription_sharing_usage_unavailable']:
@@ -297,6 +310,9 @@ def completed_text(chunks):
                     if any(x.get('type') not in ['message', 'reasoning'] for x in output): raise ValueError()
                     text = '\n'.join(c['text'] for x in output if x.get('type') == 'message'
                         for c in x.get('content', []) if c.get('type') == 'output_text')
+                    # SIWC may emit an empty final output array; text arrives in deltas.
+                    if not text.strip():
+                        text = '\n'.join(''.join(text_parts[k]) for k in sorted(text_parts))
                     if not text.strip() or len(text) > 16000: raise ValueError()
                     return text
                 except (KeyError, ValueError, TypeError, AttributeError): raise ChatGPTError('invalid_chatgpt_response', 502) from None

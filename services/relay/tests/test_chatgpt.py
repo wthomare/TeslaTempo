@@ -239,3 +239,19 @@ def test_cli_transfer_preserves_destination_host_and_tesla_data(tmp_path):
     run('import', '--directory', dest, '--file', transfer)
     assert b.load()['host_id'] == host and b.load()['host_id'] != a.load()['host_id']
     assert b.load()['accounts']['oaiapp_test']['access_token'] == 'private-access'
+
+
+def test_completed_siwc_response_may_omit_already_streamed_output():
+    chunks = [event('response.output_item.added', item={'type': 'message'}),
+              event('response.output_text.delta', output_index=1, content_index=0, delta='Bonjour '),
+              event('response.output_text.delta', output_index=1, content_index=0, delta='monde.'),
+              event('response.completed', response={'status': 'completed', 'output': []})]
+    assert completed_text(chunks) == 'Bonjour monde.'
+    with pytest.raises(ChatGPTError): completed_text(chunks[:-1])
+
+
+def test_streamed_tool_or_excessive_text_is_rejected_even_before_completion():
+    with pytest.raises(ChatGPTError):
+        completed_text([event('response.output_item.added', item={'type': 'function_call'}), completed()])
+    with pytest.raises(ChatGPTError):
+        completed_text([event('response.output_text.delta', delta='x'*16001), completed()])
