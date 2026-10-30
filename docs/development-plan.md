@@ -11,30 +11,38 @@ Les validations simulées et les validations sur véhicule réel restent distinc
 | 4 — Historique réel | Collecte bornée et dédoublonnée, mesures distinctes des estimations, coûts traçables | Interruptions, données manquantes, pagination et redémarrage | Réponses réelles des endpoints disponibles |
 | 5 — Android et exploitation | Statuts de connexion, erreurs actionnables, notifications, installation et mise à jour reproductibles | Tests Android, sauvegarde/restauration, absence de secrets dans l'APK et les journaux | Lots précédents |
 
-## Avancement du socle
+## Plan de travail avant livraison du véhicule
 
-- Lot 1 : code du relais et Android livré, tests simulés OAuth/inférence et tests
-  d'interface. L'authentification et l'inférence réelles restent à valider par compte.
-- Lot 2 : [politique de préparation et confirmation hors ligne](charging-preparation.md)
-  implémentée et testée. Aperçu natif économique/secours dans Android ; adaptateur
-  de commandes et confirmation réelle à réaliser.
-- Lot 3 : image du proxy officiel et démarrage TLS hors réseau testés ; intégration
-  du transport et validation sur véhicule encore nécessaires.
-- Lot 4 : relevés ponctuels chiffrés et consultation Android disponibles ; historique
-  de sessions et factures encore à réaliser.
-- Lot 5 : améliorations progressives ; notifications et distribution des mises à jour
-  restent à réaliser. Les essais sur véhicule ne sont pas remplacés par des simulations.
+| Chantier | Livré et testable sans véhicule | Ce qui reste dépendant du véhicule |
+| --- | --- | --- |
+| Commandes | Bibliothèque de préparation, confirmation à usage unique, journal chiffré, transport TLS à liste fermée, relecture stricte | Lecteur Fleet normalisé à partir de réponses validées, clé virtuelle, branchement API/Android et activation encadrée |
+| Erreurs | Simulateur sans réseau : sommeil, débranchement, conflit, timeout, refus partiel, relecture incohérente ; tests de concurrence et redémarrage | Comportements réels et effets de l'ordre des commandes |
+| Parcours Android | Diagnostic explicite du relais sans lecture du véhicule ; statut de session et version ; distinction données fictives/réelles | Vérification des scopes et des capacités de la voiture |
+| Notifications et distribution | Rappel local facultatif, permission contextuelle, annulation/restauration ; script de signature durable et vérification APK | Validation des restrictions batterie propres au téléphone ; pas de publication automatique |
+| Historique | Relevés chiffrés, indicateurs de couverture et baisse de compteur, export CSV sans agrégation trompeuse | Sessions complètes, factures et coûts réels à partir de données attestées |
 
-## Ordre de travail
+La chaîne de commandes reste **hors production**. Le lecteur de confiance est un
+contrat testé avec des fixtures, pas une preuve de lecture du véhicule. L'aperçu
+Android demeure sans bouton d'application. Aucun scope ni réglage personnel n'est
+modifié par une compilation ou une mise à jour.
 
-Commencer par le lot 1, puis préparer le lot 2 hors véhicule. Ne pas activer les
-commandes de production comme effet secondaire d'une mise à jour. Les essais réels
-nécessitent le véhicule et un plan précis confirmé par son utilisateur.
+Détails : [orchestration des commandes](command-orchestration.md),
+[distribution et rappels Android](android-distribution.md),
+[relevés et export](charge-observations.md).
 
-L'assistant explique les résultats du moteur ; il n'a aucun outil de commande.
-Aucune clé API payante ni aucun recours à des identifiants d'autres logiciels ne
-sert de solution de repli. Les coordonnées, activités et paramètres d'une
-installation restent dans les fichiers privés exclus de Git.
+## Ordre de validation avant activation
+
+1. Vérifier les tests Python, Android JVM, lint et les parcours sur émulateur.
+2. Construire le relais et l'APK signé ; vérifier signature et identité de mise à jour.
+3. À réception du véhicule, vérifier les données, droits et clé virtuelle.
+4. Brancher le lecteur normalisé, la préparation serveur et la confirmation Android.
+5. Faire un seul essai explicitement confirmé, relire, puis observer la recharge.
+6. Valider reprise, conflits et coût API avant tout élargissement fonctionnel.
+
+ChatGPT explique les résultats du moteur ; il n'a aucun outil de commande.
+Les relevés ne sont jamais transformés en fausses sessions ni les estimations en
+factures. Les coordonnées, activités, clés de signature et paramètres d'une
+installation restent hors du dépôt public.
 
 ## Critères de livraison du lot 1
 

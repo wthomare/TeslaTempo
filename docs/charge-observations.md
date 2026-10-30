@@ -51,3 +51,17 @@ observée. Il reste à valider les réponses réelles du véhicule, la collecte 
 les montants facturés accessibles au compte et une éventuelle stratégie de télémétrie
 continue avec un budget explicite. Le mode démonstration ne fabrique pas de relevés
 présentés comme réels.
+
+## Couverture et export Android
+
+L'écran indique le nombre de relevés, le plus grand intervalle sans mesure et les
+baisses observées du compteur cumulatif. Ces baisses peuvent correspondre à une
+remise à zéro mais ne prouvent pas le début d'une session complète.
+
+L'export CSV utilise le sélecteur de fichier Android, uniquement sur demande, avec
+les relevés actuellement chargés (maximum 300). Dates UTC, unités explicites,
+valeurs inconnues vides, coûts inconnus et provenance simulée/réelle. Aucun VIN,
+nom ou identifiant du compte n'est ajouté. Les états inconnus sont normalisés,
+jamais utilisés comme formules de tableur. Les compteurs répétés ne sont pas
+additionnés. Le fichier contient des mesures personnelles : choisir un emplacement
+privé. L'export n'interroge ni Tesla ni ChatGPT.

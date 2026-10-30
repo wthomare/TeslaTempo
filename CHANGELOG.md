@@ -1,5 +1,22 @@
 # Historique des versions
 
+## Android 0.8.0 / relais 0.4.0
+
+- Chaîne de commandes hors production : programme ponctuel borné, confirmation à
+  usage unique, prélecture, journal chiffré et relecture stricte. Aucun endpoint
+  réel activé ; lecteur Fleet et confirmation Android à brancher après validation.
+- Transport TLS vers le proxy officiel, liste fermée de commandes, sans retry ni
+  redirection ; simulateur de succès/refus/timeout et reprise après interruption.
+- Diagnostic Android du relais sans lecture du véhicule, erreurs Tesla distinctes
+  d'un mauvais jeton du relais et affichage des versions.
+- Rappel local facultatif de vérification d'une simulation personnelle, permission
+  contextuelle, annulation et restauration ; aucune commande ni collecte en fond.
+- Relevés : indicateurs de couverture et export CSV explicite, compteurs non
+  additionnés, valeurs manquantes vides, coûts inconnus.
+- Signature Android privée durable, vérification APK, empreinte du certificat et
+  procédure d'installation/mise à jour. Pas de publication automatique.
+
+
 ## Android 0.7.0 / relais 0.3.0
 
 - Aperçu de programme ponctuel continu : début arrondi, marge de préparation, coûts recalculés, aucune fin forcée à 6 h ; secours choisi séparément.

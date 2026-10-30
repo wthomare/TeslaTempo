@@ -44,14 +44,22 @@ class RelayGateway(
         val url = base.newBuilder().apply { segments.forEach { addPathSegment(it) } }.build()
         try {
             http.newCall(Request.Builder().url(url).header("Authorization", "Bearer $token").method(method, null).build()).execute().use { response ->
-                if (!response.isSuccessful) throw RelayException(when (response.code) {
+                if (!response.isSuccessful) {
+                    val code = runCatching {
+                        val error = JsonParser.parseString(response.peekBody(8192).string()).asJsonObject
+                        (error.get("error") ?: error.get("detail"))?.asString
+                    }.getOrNull()
+                    if (code == "tesla_authorization_required") throw RelayException("Le relais a répondu, mais la session Tesla doit être reconnectée côté relais.")
+                    if (code == "vehicle_or_service_unavailable") throw RelayException("Véhicule ou service Tesla indisponible. Aucun réveil automatique n’a été envoyé.")
+                    throw RelayException(when (response.code) {
                     401, 403 -> "Accès refusé. Vérifiez le jeton du relais."
                     404 -> "Véhicule ou endpoint introuvable. Actualisez la liste."
                     409 -> "Connexion Tesla nécessaire sur le relais."
                     429 -> "Trop de requêtes. Patientez une minute avant de réessayer."
                     in 300..399 -> "Redirection refusée. Configurez directement l’URL HTTPS finale."
                     else -> "Le relais est indisponible (HTTP ${response.code})."
-                })
+                    })
+                }
                 val body = response.body ?: throw RelayException("Réponse du relais vide.")
                 // Bound input before parsing, including responses without Content-Length.
                 val bytes = body.byteStream().readNBytes(1_048_577)
@@ -61,6 +69,20 @@ class RelayGateway(
         } catch (e: RelayException) { throw e
         } catch (_: IOException) { throw RelayException("Connexion impossible. Vérifiez l’adresse, le réseau et le certificat HTTPS.")
         } catch (_: RuntimeException) { throw RelayException("Réponse du relais non reconnue.") }
+    }
+
+    fun diagnose(): RelayDiagnostics {
+        try {
+            val status = get("v1", "status")
+            val mode = status.get("mode").asString
+            val simulated = status.get("simulated").asBoolean
+            check(mode in setOf("mock", "tesla") && simulated == (mode == "mock"))
+            val version = status.get("version").asString
+            check(version.length <= 50 && version.matches(Regex("[a-zA-Z0-9.+-]+")))
+            return RelayDiagnostics(version, simulated, status.get("tesla_connected").asBoolean,
+                status.get("vehicle_commands_enabled").asBoolean)
+        } catch (e: RelayException) { throw e }
+        catch (_: Exception) { throw RelayException("Statut du relais non reconnu. Vérifiez sa version.") }
     }
 
     fun observations(vehicleId: String): ObservationHistory {
@@ -93,6 +115,8 @@ class RelayGateway(
             val simulated = status.get("simulated").asBoolean
             val mode = status.get("mode").asString
             if (mode !in setOf("mock", "tesla") || simulated != (mode == "mock")) throw IllegalStateException()
+            if (!simulated && !status.get("tesla_connected").asBoolean)
+                throw RelayException("Relais accessible, mais compte Tesla non connecté. Terminez la connexion Tesla côté relais.")
             val list = get("v1", "vehicles")
             if (list.get("simulated").asBoolean != simulated) throw IllegalStateException()
             val vehicles = list.getAsJsonArray("vehicles").map { element ->
@@ -123,3 +147,5 @@ private fun JsonObject.number(key: String, range: IntRange): Int? = get(key)?.ta
 
 data class ChargeObservation(val at: java.time.Instant, val state: String, val battery: Double?, val sessionCounter: Double?, val current: Double?)
 data class ObservationHistory(val simulated: Boolean, val samples: List<ChargeObservation>)
+
+data class RelayDiagnostics(val version: String, val simulated: Boolean, val teslaConnected: Boolean, val commandsEnabled: Boolean)

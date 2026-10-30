@@ -17,6 +17,21 @@ import kotlinx.coroutines.runBlocking
 class AppTest {
     @get:Rule val compose = createAndroidComposeRule<MainActivity>()
 
+    @Test fun diagnoseWithoutReadingVehicleOrSavingCredentials() {
+        okhttp3.mockwebserver.MockWebServer().use { server ->
+            server.start(java.net.InetAddress.getByName("127.0.0.1"),0)
+            server.enqueue(okhttp3.mockwebserver.MockResponse().setBody("""{"mode":"tesla","simulated":false,"version":"0.3.0","tesla_connected":false,"vehicle_commands_enabled":false}"""))
+            compose.onNodeWithText("Réglages").performScrollTo().performClick()
+            compose.onNodeWithText("URL du relais").performTextReplacement(server.url("/").newBuilder().host("127.0.0.1").build().toString())
+            compose.onNodeWithText("Jeton du relais").performTextReplacement("synthetic")
+            val before = CredentialStore(compose.activity).load()?.url
+            compose.onNodeWithText("Diagnostiquer la connexion").performScrollTo().performClick()
+            compose.waitUntil(10_000) { compose.onAllNodesWithText("jeton accepté", substring=true).fetchSemanticsNodes().isNotEmpty() }
+            assertEquals(1,server.requestCount)
+            assertEquals("/v1/status",server.takeRequest().path)
+            assertEquals(before,CredentialStore(compose.activity).load()?.url)
+        }
+    }
     @Test fun demoAndSettings() {
         compose.onNodeWithText("Réglages").performScrollTo().performClick()
         compose.onNodeWithText("Démonstration", useUnmergedTree = true).performScrollTo().performClick()

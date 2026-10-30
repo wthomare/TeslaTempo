@@ -20,6 +20,7 @@ data class ScreenState(
     val dashboard: Dashboard? = null,
     val relayUrl: String? = null,
     val error: String? = null,
+    val diagnostic: String? = null,
 )
 
 class DashboardViewModel(private val store: CredentialStore) : ViewModel() {
@@ -51,6 +52,24 @@ class DashboardViewModel(private val store: CredentialStore) : ViewModel() {
             } catch (e: RelayException) {
                 mutable.value = ScreenState(false, relayUrl = credentials?.url, error = e.message)
             }
+        }
+    }
+
+    fun diagnose(url: String, token: String) {
+        if (mutable.value.loading) return
+        mutable.value = mutable.value.copy(loading = true, error = null, diagnostic = null)
+        viewModelScope.launch {
+            try {
+                val candidate = if (token.isBlank()) {
+                    credentials?.takeIf { it.url == url.trim() }
+                        ?: throw RelayException("Saisissez le jeton pour vérifier cette adresse.")
+                } else RelayCredentials(url.trim(), token.trim())
+                val d = withContext(Dispatchers.IO) { RelayGateway(candidate, BuildConfig.DEBUG).diagnose() }
+                mutable.value = mutable.value.copy(diagnostic = "Relais ${d.version} accessible · jeton accepté.\n" +
+                    (if (d.simulated) "Démonstration : aucune donnée Tesla réelle." else if (d.teslaConnected) "Session Tesla enregistrée. Les droits et le véhicule seront vérifiés à l’actualisation." else "Connexion Tesla à terminer sur le relais.") +
+                    "\nCommandes réelles : " + (if (d.commandsEnabled) "annoncées actives par le relais." else "désactivées."))
+            } catch (e: RelayException) { mutable.value = mutable.value.copy(error = e.message) }
+            finally { mutable.value = mutable.value.copy(loading = false) }
         }
     }
 

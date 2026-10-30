@@ -78,7 +78,7 @@ fun TeslaTempoApp(model: DashboardViewModel, personal: PersonalViewModel, histor
                     PersonalPlannerScreen(personalState, historyState, history::save) { page = "profile" }
                 } else if (page == "relay") {
                     Settings(state, { url, token -> model.connect(url, token) { page = "home" } },
-                        { model.useDemo { page = "home" } })
+                        { model.useDemo { page = "home" } }, model::diagnose)
                 } else {
                     Button(onClick = { page = "plan" }, modifier = Modifier.fillMaxWidth()) { Text("Mon plan personnel") }
                     OutlinedButton(onClick = { page = "profile" }, modifier = Modifier.fillMaxWidth()) { Text("Mon profil et calendrier") }
@@ -146,7 +146,7 @@ private fun DashboardContent(data: Dashboard, relayUrl: String?, loading: Boolea
 }
 
 @Composable
-private fun Settings(state: ScreenState, connect: (String, String) -> Unit, demo: () -> Unit) {
+private fun Settings(state: ScreenState, connect: (String, String) -> Unit, demo: () -> Unit, diagnose: (String, String) -> Unit) {
     var url by rememberSaveable { mutableStateOf(state.relayUrl ?: "") }
     // Do not persist the typed token in saved instance state, logs or a Bundle.
     var token by remember { mutableStateOf("") }
@@ -159,6 +159,10 @@ private fun Settings(state: ScreenState, connect: (String, String) -> Unit, demo
     Button(onClick = { connect(url, token) }, enabled = !state.loading && url.isNotBlank() && token.isNotBlank(), modifier = Modifier.fillMaxWidth()) {
         Text("Connecter le relais")
     }
+    OutlinedButton(onClick = { diagnose(url, token) }, enabled = !state.loading && url.isNotBlank()) { Text("Diagnostiquer la connexion") }
+    Text("Vérifie uniquement le relais et son statut, sans réveiller ni interroger la voiture. Laissez le jeton vide pour utiliser celui enregistré à la même adresse.", style = MaterialTheme.typography.bodySmall)
+    state.diagnostic?.let { Text(it) }
+    Text("Application ${BuildConfig.VERSION_NAME} · Android ${android.os.Build.VERSION.RELEASE}", style = MaterialTheme.typography.bodySmall)
     HorizontalDivider()
     Text("Mode démonstration", style = MaterialTheme.typography.titleLarge)
     Text("Explorez l’interface avec un véhicule fictif. Revenir à ce mode efface la connexion enregistrée sur ce téléphone.")

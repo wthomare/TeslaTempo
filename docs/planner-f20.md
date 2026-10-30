@@ -54,4 +54,4 @@ Exemple hors changement d'heure : 20 % → 80 %, batterie de 60 kWh, 10 A, rende
 
 Les tests JVM couvrent les six tarifs, minuit/6 h/22 h, changements d'heure, versions, inconnues, coût HP rouge, départ vs absence, énergie conservée, puissance réduite, entrées invalides, indisponibilité et secours. Le test Compose couvre la simulation, l'absence et le refus de 11 A.
 
-La source Tempo et les profils de mobilité sont intégrés en 0.3.0. Restent à intégrer : saisie/import manuel des tarifs, consommation des trajets, persistance/audit des plans, notifications, détection réelle du branchement/domicile et commandes Tesla avec confirmation. Ne pas utiliser la simulation pour piloter une recharge réelle.
+La source Tempo et les profils de mobilité sont intégrés en 0.3.0. Restent à intégrer : saisie/import manuel des tarifs, consommation des trajets, historique complet des sessions, détection réelle du branchement/domicile et commandes Tesla avec confirmation. Ne pas utiliser la simulation pour piloter une recharge réelle.

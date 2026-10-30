@@ -2,7 +2,7 @@
 # See docs/https-truenas.md. Build the relay image on the NAS first.
 services:
   relay:
-    image: teslatempo-relay:0.3.0
+    image: teslatempo-relay:0.4.0
     pull_policy: never
     user: "1000:1000"
     restart: unless-stopped

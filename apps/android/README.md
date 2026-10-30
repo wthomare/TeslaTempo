@@ -1,4 +1,4 @@
-# Application Android Tesla Tempo — prototype 0.7.0
+# Application Android Tesla Tempo — prototype 0.8.0
 
 Application native Kotlin, Jetpack Compose et Material 3. Android 13 minimum (API 33), compilation/cible API 36. APK privé de développement, aucune publication sur Google Play.
 
@@ -92,3 +92,9 @@ app/src/debug/         Exception HTTP strictement locale
 Sources techniques : [compatibilité AGP 9.1.1](https://developer.android.com/build/releases/agp-9-1-0-release-notes), [sécurité réseau Android](https://developer.android.com/privacy-and-security/security-config), [état Compose](https://developer.android.com/develop/ui/compose/state-hoisting). Versions choisies pour reproduire la chaîne validée sur ce poste, pas pour revendiquer les toutes dernières bibliothèques.
 
 Références : [spécification](../../docs/specification.md), [relais V1](../../docs/relay-v1.md), [organisation](../../docs/repository.md).
+
+**Nouveau en 0.8.0 :** diagnostic du relais sans interrogation de la voiture,
+rappel local facultatif avant vérification d'un plan personnel, indicateurs de
+couverture des relevés et export CSV. Le [guide de distribution](../../docs/android-distribution.md)
+décrit la signature durable, l'installation et les mises à jour. Les commandes
+réelles restent désactivées ; le rappel n'exécute pas une recharge.

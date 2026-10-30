@@ -32,16 +32,16 @@ clé publique enregistrée. Le proxy partage le réseau du relais et écoute seu
 sur sa boucle locale, sans port publié. Ne pas créer de route Caddy vers lui.
 Aucun log détaillé n'est activé.
 
-Le futur client du relais devra valider ce certificat local, utiliser le jeton OAuth
-Tesla avec les droits adaptés, et n'autoriser qu'une liste de commandes de recharge.
+Le client du relais valide le certificat local et limite les commandes ; son
+branchement futur nécessitera un jeton OAuth Tesla avec les droits adaptés.
 Ne pas activer de client HTTP générique, ni désactiver la vérification TLS.
 
 ## Ce qui reste à valider
 
 Le démarrage TLS peut être testé avec des clés fictives et sans réseau externe.
 Cela ne prouve pas que la signature soit acceptée par un véhicule. Il faut encore
-l'adaptateur de commandes du relais, une clé virtuelle réellement appairée, une
-lecture préalable des programmes et une relecture après chaque changement.
+le branchement du lecteur Fleet réel, une clé virtuelle réellement appairée,
+et la validation des lectures préalables et des relectures sur le véhicule.
 La rotation du certificat local doit être planifiée avant son expiration ; les
 anciens fichiers ne sont pas remplacés automatiquement.
 
@@ -51,6 +51,10 @@ Test Docker reproductible, après construction des deux images :
 .venv/bin/python scripts/check-command-proxy.py
 ```
 
-Le test utilise l'image cliente `teslatempo-relay:0.3.0`, crée des clés temporaires,
+Le test utilise l'image cliente `teslatempo-relay:0.4.0`, crée des clés temporaires,
 vérifie TLS et le refus d'une requête sans authentification, puis supprime ses
 conteneurs. Le proxy testé n'a aucun réseau externe.
+
+Le [transport TLS à commandes limitées](../../docs/command-orchestration.md) est
+implémenté dans le relais, sans route de commande activée. Le smoke test exerce
+aussi ce client avec un jeton fictif sur un conteneur sans réseau extérieur.

@@ -29,6 +29,7 @@ fun SaveSimulation(plan: SavedPlan, state: HistoryState, save: (SavedPlan) -> Un
 
 @Composable
 fun HistoryScreen(state: HistoryState, delete: (String) -> Unit, clear: () -> Unit, assistant: AssistantViewModel) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     var selected by rememberSaveable { mutableStateOf<String?>(null) }
     var removal by rememberSaveable { mutableStateOf<String?>(null) }
     Text("Simulations enregistrées", style = MaterialTheme.typography.titleLarge)
@@ -53,6 +54,7 @@ fun HistoryScreen(state: HistoryState, delete: (String) -> Unit, clear: () -> Un
         (current.optimized.slots + current.fallback.slots).map { it.price.tariffId to it.price.source }.distinct().forEach { (id, source) ->
             Text("Tarif utilisé : $id\nSource au calcul : $source", style = MaterialTheme.typography.bodySmall)
         }
+        ReminderCard(current)
         AssistantExplanation(current, assistant)
         AssistantShare(current)
         OutlinedButton(onClick = { removal = current.id }, enabled = !state.busy) { Text("Supprimer cette simulation") }
@@ -78,6 +80,7 @@ fun HistoryScreen(state: HistoryState, delete: (String) -> Unit, clear: () -> Un
             text = { Text("Cette suppression locale est définitive. Le profil, les données Tempo et la connexion au relais sont conservés.") },
             confirmButton = { TextButton(onClick = {
                 removal = null
+                org.teslatempo.notifications.PlanReminder(context).cancel(if (id == "all") null else id)
                 if (id == "all") clear() else delete(id)
             }) { Text("Supprimer") } },
             dismissButton = { TextButton(onClick = { removal = null }) { Text("Annuler") } })

@@ -34,11 +34,19 @@ for attempt in range(20):
  except urllib.error.HTTPError as e:
   assert e.code in (400,401,403,404,405)
   print('TLS verified; unauthenticated request refused; external networking disabled.')
+  from relay.commands import SignedTransport, Refused, Uncertain
+  client=SignedTransport('/run/secrets/proxy_tls_cert.pem',lambda:'synthetic-invalid-token')
+  try:
+   try:
+    client.send('TEST0000000000001','set_charge_limit',{'percent':80})
+    raise AssertionError('Invalid token accepted')
+   except (Refused,Uncertain):print('Relay allowlisted TLS transport: invalid token refused, no retry.')
+  finally:client.close()
   break
  except urllib.error.URLError:
   if attempt==19:raise
   time.sleep(.25)
 """
         subprocess.run(['docker','run','--rm','--network','container:'+name,'-v',tmp+':/run/secrets:ro',
-            '--user',f'{os.getuid()}:{os.getgid()}','--entrypoint','python','teslatempo-relay:0.3.0','-c',check],check=True)
+            '--user',f'{os.getuid()}:{os.getgid()}','--entrypoint','python','teslatempo-relay:0.4.0','-c',check],check=True)
     finally:subprocess.run(['docker','rm','-f',name],check=True,stdout=subprocess.DEVNULL)

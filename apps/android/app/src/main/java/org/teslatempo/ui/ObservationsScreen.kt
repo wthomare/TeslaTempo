@@ -28,6 +28,12 @@ fun ObservationsScreen(vehicle: Vehicle?, model: ObservationsViewModel) {
         state.history?.let{history ->
             if(history.simulated)Text("Mode démonstration : aucun relevé réel.")
             else if(history.samples.isEmpty())Text("Aucun relevé. Les prochaines lectures réelles pourront être conservées si leur horodatage est valide et récent.")
+            if (history.samples.isNotEmpty()) {
+                val coverage = org.teslatempo.history.observationCoverage(history)
+                Text("${coverage.count} relevés · plus grand intervalle sans mesure : ${coverage.largestGapSeconds?.let { java.time.Duration.ofSeconds(it).toMinutes().toString() + " min" } ?: "inconnu"}.")
+                if (coverage.counterDecreases > 0) Text("${coverage.counterDecreases} baisse(s) du compteur observée(s). Une remise à zéro ne suffit pas à identifier une session complète.")
+                ObservationExportButton(history)
+            }
             fun number(n: Double?,unit: String)=n?.let{String.format(Locale.FRANCE,"%.2f",it)+" "+unit}?:"Inconnu"
             val formatter=DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss xxx").withZone(ZoneId.of("Europe/Paris"))
             history.samples.take(shown).forEach { sample ->

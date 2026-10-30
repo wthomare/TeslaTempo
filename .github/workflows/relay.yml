@@ -24,6 +24,8 @@ jobs:
       - name: Test with mocked Tesla transport
         working-directory: services/relay
         run: python -m pytest -q
+      - name: Rehearse command outcomes without network
+        run: python scripts/rehearse-commands.py
       - name: Prepare local mock secrets
         run: python scripts/init-local.py
       - name: Validate Compose

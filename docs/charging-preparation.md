@@ -63,5 +63,6 @@ Le [composant facultatif](../services/command-proxy/README.md) construit le prox
 Tesla officiel depuis une source vérifiée. Il écoute uniquement sur la boucle
 locale du relais, utilise une clé TLS distincte et n'est pas démarré par défaut.
 Son test de démarrage utilise des clés fictives sans réseau externe. L'acceptation
-d'une commande signée et l'adaptateur de commandes du relais restent à développer
-ou valider avant toute activation.
+d'une commande signée reste à valider sur véhicule. La [chaîne de commandes](command-orchestration.md)
+est testée hors production ; le lecteur Fleet et la confirmation Android ne sont
+pas encore branchés.

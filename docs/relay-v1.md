@@ -1,6 +1,6 @@
 # Relais Docker V1 — installation et validation
 
-Version `0.3.0`. Instance personnelle, un compte Tesla, un processus.
+Version `0.4.0`. Instance personnelle, un compte Tesla, un processus.
 
 ## Ce qui est livré
 
@@ -187,7 +187,7 @@ python3 -m venv .venv
 .venv/bin/pip install -r requirements-dev.txt
 .venv/bin/python -m pytest -q
 cd ../..
-docker build -t teslatempo-relay:0.3.0 services/relay
+docker build -t teslatempo-relay:0.4.0 services/relay
 python3 scripts/check-running.py
 ```
 

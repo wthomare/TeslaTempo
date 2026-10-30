@@ -10,6 +10,7 @@ secrets/
 *.pfx
 *.jks
 *.keystore
+signing.json
 credentials*.json
 tokens*.json
 
