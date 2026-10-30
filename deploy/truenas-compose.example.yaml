@@ -1,0 +1,50 @@
+# TrueNAS Apps > Install via YAML. Replace /mnt/POOL and UID:GID before use.
+# Build teslatempo-relay:0.1.0 on the NAS first; no registry pull is configured.
+services:
+  relay:
+    image: teslatempo-relay:0.1.0
+    pull_policy: never
+    user: "950:950"
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 128
+    mem_limit: 256m
+    cpus: 1.0
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m
+    ports:
+      - "127.0.0.1:18080:8080"
+    environment:
+      RELAY_MODE: mock
+      PUBLIC_BASE_URL: http://localhost:18080
+      TESLA_REGION: eu
+      TESLA_CLIENT_ID: ""
+      DATA_DIR: /data
+      RELAY_API_TOKEN_FILE: /run/secrets/relay_api_token
+      TOKEN_ENCRYPTION_KEY_FILE: /run/secrets/token_encryption_key
+      TESLA_CLIENT_SECRET_FILE: /run/secrets/tesla_client_secret
+      TESLA_PUBLIC_KEY_FILE: /run/secrets/tesla_public_key.pem
+    volumes:
+      - /mnt/POOL/teslatempo/source/data:/data
+    secrets:
+      - relay_api_token
+      - token_encryption_key
+      - tesla_client_secret
+      - source: tesla_public_key
+        target: tesla_public_key.pem
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+secrets:
+  relay_api_token:
+    file: /mnt/POOL/teslatempo/source/secrets/relay_api_token
+  token_encryption_key:
+    file: /mnt/POOL/teslatempo/source/secrets/token_encryption_key
+  tesla_client_secret:
+    file: /mnt/POOL/teslatempo/source/secrets/tesla_client_secret
+  tesla_public_key:
+    file: /mnt/POOL/teslatempo/source/secrets/tesla_public_key.pem
