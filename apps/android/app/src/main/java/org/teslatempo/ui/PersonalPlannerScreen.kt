@@ -6,6 +6,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import org.teslatempo.personal.availability
+import org.teslatempo.history.*
 import org.teslatempo.planner.*
 import org.teslatempo.tempo.*
 import java.time.*
@@ -13,7 +14,7 @@ import java.time.*
 data class PersonalCalculation(val request: ChargingRequest, val result: PlanComparison, val created: Instant)
 
 @Composable
-fun PersonalPlannerScreen(state: PersonalState, editProfile: () -> Unit) {
+fun PersonalPlannerScreen(state: PersonalState, history: HistoryState, save: (SavedPlan) -> Unit, editProfile: () -> Unit) {
     Text("Plan personnel · lecture seule", style = MaterialTheme.typography.titleLarge)
     if (!state.settings.confirmed) {
         Text("Renseignez et confirmez d’abord la capacité de batterie et votre semaine type.")
@@ -52,6 +53,10 @@ fun PersonalPlannerScreen(state: PersonalState, editProfile: () -> Unit) {
     }, modifier = Modifier.fillMaxWidth()) { Text("Calculer mon plan") }
     error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
     calculation?.let { c ->
+        if (c.result.status == PlanStatus.DRAFT || c.result.status == PlanStatus.TARGET_REACHED) {
+            val snapshot = remember(c) { SavedPlan.capture(c.request, c.result, PlanOrigin.PERSONAL, c.created) }
+            SaveSimulation(snapshot, history, save)
+        }
         Text("Calculé le ${localTime(c.created.toString())} · horizon 48 h · Europe/Paris")
         if (state.now >= c.created.plusSeconds(300)) Text("Calcul ancien : recalculez avant de vous y référer.", color = MaterialTheme.colorScheme.error)
         when (c.result.status) {

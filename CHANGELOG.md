@@ -1,5 +1,13 @@
 # Historique des versions
 
+## Android 0.4.0
+
+- Historique local des simulations personnelles et de démonstration, avec enregistrement explicite.
+- Conservation des hypothèses, créneaux, prix et sources sans recalcul des archives.
+- Consultation hors connexion, suppression unitaire ou complète avec confirmation.
+- Limite de 50 entrées sans suppression automatique ; données exclues des sauvegardes Android.
+- Aucune commande véhicule et aucune transmission de l'historique.
+
 ## Android 0.3.0 — 29 octobre 2026
 
 - Couleurs Tempo publiées et six tarifs TTC datés via calendrier-tempo.fr, cache et provenance visibles.

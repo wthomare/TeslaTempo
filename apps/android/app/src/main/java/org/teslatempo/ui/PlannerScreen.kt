@@ -10,6 +10,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import org.teslatempo.planner.*
+import org.teslatempo.history.*
+import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -19,7 +21,7 @@ private fun amount(value: Double) = String.format(Locale.FRANCE, "%.2f", value)
 private val timeFormat = DateTimeFormatter.ofPattern("dd/MM HH:mm xxx").withZone(ZoneId.of("Europe/Paris"))
 
 @Composable
-fun PlannerScreen() {
+fun PlannerScreen(history: HistoryState, save: (SavedPlan) -> Unit) {
     var soc by rememberSaveable { mutableStateOf("20") }
     var capacity by rememberSaveable { mutableStateOf("60") }
     var amps by rememberSaveable { mutableStateOf("10") }
@@ -54,6 +56,8 @@ fun PlannerScreen() {
     } else {
         val (simulation, comparison) = result.getOrThrow()
         val request = simulation.request
+        val snapshot = remember(result) { SavedPlan.capture(request, comparison, PlanOrigin.DEMO, Instant.now()) }
+        SaveSimulation(snapshot, history, save)
         Text("Du ${timeFormat.format(request.start)} au ${timeFormat.format(request.horizon)}", style = MaterialTheme.typography.bodySmall)
         if (comparison.status == PlanStatus.TARGET_REACHED) {
             Text("Objectif déjà atteint · aucune recharge nécessaire.")

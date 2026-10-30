@@ -12,7 +12,7 @@ Tesla Tempo AI est un projet d'application Android native pour optimiser la rech
 
 **Le relais Docker V1 (`0.1.0`) est disponible dans ce dépôt.** Il fonctionne en mode démonstration et implémente OAuth et les lectures Tesla, testés avec un serveur simulé. Il fournit aussi le cahier des charges et l’audit des API.
 
-L’image se construit localement ; aucune image n’est encore publiée dans un registre. Le [prototype Android 0.3.0](apps/android/README.md) est disponible : tableau de bord, démonstration hors connexion et connexion au relais en lecture seule, thème sombre, simulation Tempo/F20, couleurs et tarifs publiés, profil et calendrier personnels sauvegardés. Les commandes signées et l’intégration sur véhicule réel restent à développer ou valider. Les fonctionnalités ci-dessous décrivent la cible du projet.
+L’image se construit localement ; aucune image n’est encore publiée dans un registre. Le [prototype Android 0.4.0](apps/android/README.md) est disponible : tableau de bord, démonstration hors connexion et connexion au relais en lecture seule, thème sombre, simulation Tempo/F20, couleurs et tarifs publiés, profil et calendrier personnels sauvegardés, historique local des simulations. Les commandes signées et l’intégration sur véhicule réel restent à développer ou valider. Les fonctionnalités ci-dessous décrivent la cible du projet.
 
 ### Essayer le relais
 
@@ -89,6 +89,7 @@ Chaque composant regroupe son code et ses tests. Les secrets et les données d�
 | --- | --- |
 | [Cahier des charges](docs/specification.md) | Règles métier, fonctionnalités et critères d'acceptation |
 | [Audit de faisabilité](docs/feasibility.md) | Sources officielles, contraintes et points restant à tester |
+| [Historique des simulations](docs/simulation-history.md) | Enregistrement local, consultation et suppression |
 | [Tempo et profil personnel](docs/tempo-personal.md) | Source des données, cache, paramètres et calendrier |
 | [Démarches Tesla Developer](docs/tesla-developer.md) | Application, autorisations, clés, facturation et connexion au compte |
 | [Installation TrueNAS](docs/installation-truenas.md) | Installation depuis un autre poste, reprise et restauration |
@@ -105,7 +106,8 @@ Chaque composant regroupe son code et ses tests. Les secrets et les données d�
 - [x] Intégrer une source Tempo publiée avec cache daté et conserver une démonstration fictive séparée.
 - [x] Développer et tester le moteur Tempo/F20 et les coûts sur des scénarios fictifs.
 - [x] Relier un calcul personnel aux données Tempo, aux tarifs publiés et aux profils de mobilité sauvegardés.
-- [ ] Persister l’historique des plans et intégrer la consommation des trajets.
+- [x] Conserver les simulations localement avec leurs hypothèses et tarifs.
+- [ ] Intégrer la consommation des trajets et l’historique des recharges réelles.
 - [ ] Construire les écrans sur données simulées.
 - [x] Fournir une V1 du relais en lecture seule, son Dockerfile et le déploiement Compose.
 - [ ] Intégrer le proxy Tesla de signature et la validation des commandes.

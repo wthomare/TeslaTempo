@@ -1,4 +1,4 @@
-# Application Android Tesla Tempo — prototype 0.3.0
+# Application Android Tesla Tempo — prototype 0.4.0
 
 Application native Kotlin, Jetpack Compose et Material 3. Android 13 minimum (API 33), compilation/cible API 36. APK privé de développement, aucune publication sur Google Play.
 
@@ -14,7 +14,9 @@ Application native Kotlin, Jetpack Compose et Material 3. Android 13 minimum (AP
 
 **Nouveau en 0.3.0 :** [couleurs et tarifs Tempo publiés, cache DataStore, profil personnel et calendrier](../../docs/tempo-personal.md). L'accueil propose « Mon profil et calendrier », « Mon plan personnel » et les données Tempo avec leur provenance. Le profil exige une capacité de batterie renseignée par l'utilisateur ; aucune capacité de Model Y n'est supposée.
 
-**Non livré :** OAuth dans Android, application des plans, historique, notifications et assistant. Les profils et le cache sont sauvegardés avec DataStore ; Room sera ajouté avec l'historique. Le socle emploie des ViewModels, StateFlow et une injection manuelle.
+**Nouveau en 0.4.0 :** [historique local des simulations](../../docs/simulation-history.md), enregistrement explicite des calculs, consultation hors connexion et suppression avec confirmation.
+
+**Non livré :** OAuth dans Android, application des plans, historique des recharges réelles, notifications et assistant. Les profils, le cache et les simulations sont sauvegardés avec DataStore. Le socle emploie des ViewModels, StateFlow et une injection manuelle.
 
 ## Construire et ouvrir
 
