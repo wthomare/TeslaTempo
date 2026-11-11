@@ -105,6 +105,7 @@ class AppTest {
         compose.onNodeWithText("Absence à 8 h").performScrollTo().performClick()
         compose.onAllNodesWithText("Objectif non atteint", substring = true).onFirst().performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Courant (A, maximum 10)").performScrollTo().performTextReplacement("11")
+        androidx.test.espresso.Espresso.closeSoftKeyboard()
         compose.onNodeWithText("Le courant doit rester entre 1 et 10 A.").performScrollTo().assertIsDisplayed()
     }
 
