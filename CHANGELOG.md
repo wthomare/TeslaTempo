@@ -1,5 +1,13 @@
 # Historique des versions
 
+## Android 0.12.0 (expérimental)
+
+- Onglet Conduite : lecture Tesla BLE locale, sans API distante ni GPS téléphone.
+- Clé de lecture Android Keystore, appairage physique et sessions chiffrées avec Protobuf Tesla.
+- Cockpit minimal au-dessus de Waze, fraîcheur des valeurs, arrêt explicite et destination ponctuelle.
+- Validation réelle sur voiture requise ; voir docs/conduite-ble.md.
+
+
 ## Android 0.11.0
 
 - Refonte sombre de l'accueil, navigation persistante et détails secondaires repliables.

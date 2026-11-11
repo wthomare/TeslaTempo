@@ -21,7 +21,10 @@ def verify(apk, sdk, certificate, version):
         raise ValueError('Unexpected Android release configuration')
     permissions = set(re.findall(r"uses-permission: name='([^']+)'", info))
     allowed = {'android.permission.INTERNET', 'android.permission.POST_NOTIFICATIONS',
-               'android.permission.RECEIVE_BOOT_COMPLETED', 'org.teslatempo.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION'}
+               'android.permission.RECEIVE_BOOT_COMPLETED',
+               'android.permission.BLUETOOTH_SCAN', 'android.permission.BLUETOOTH_CONNECT',
+               'android.permission.FOREGROUND_SERVICE', 'android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE',
+               'android.permission.SYSTEM_ALERT_WINDOW', 'org.teslatempo.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION'}
     if not permissions <= allowed:
         raise ValueError('Unexpected APK permissions')
     return hashlib.sha256(apk.read_bytes()).hexdigest()

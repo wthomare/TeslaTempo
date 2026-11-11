@@ -1,0 +1,10 @@
+plugins {
+    id 'java-library'
+    id 'com.google.protobuf'
+}
+java { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
+dependencies { api 'com.google.protobuf:protobuf-javalite:4.33.5' }
+protobuf {
+    protoc { artifact = 'com.google.protobuf:protoc:4.33.5' }
+    generateProtoTasks { all().configureEach { builtins { java { option 'lite' } } } }
+}

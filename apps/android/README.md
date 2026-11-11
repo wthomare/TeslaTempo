@@ -1,5 +1,7 @@
 # Application Android Tesla Tempo — prototype 0.9.0
 
+Le module expérimental [Conduite BLE](../../docs/conduite-ble.md) est intégré depuis la 0.12.0. Les schémas Tesla sont isolés dans `tesla-protocol/` (module JVM Protobuf lite) ; leur licence et leur version source sont dans `third-party/tesla/`.
+
 Application native Kotlin, Jetpack Compose et Material 3. Android 13 minimum (API 33), compilation/cible API 36. APK privé de développement, aucune publication sur Google Play.
 
 ## Ce qui fonctionne

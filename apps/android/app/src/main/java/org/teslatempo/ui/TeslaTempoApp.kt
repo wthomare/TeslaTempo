@@ -63,7 +63,7 @@ fun TeslaTempoApp(model: DashboardViewModel, personal: PersonalViewModel, histor
         BackHandler(page != "home") { page = "home" }
         Scaffold(bottomBar = {
             NavigationBar(containerColor = MaterialTheme.colorScheme.background, tonalElevation = 0.dp) {
-                listOf(Triple("home", "Recharge", "◉"), Triple("plan", "Plan", "≡"), Triple("relay", "Réglages", "⚙")).forEach { (target, label, symbol) ->
+                listOf(Triple("home", "Recharge", "◉"), Triple("plan", "Plan", "≡"), Triple("drive", "Conduite", "◇"), Triple("relay", "Réglages", "⚙")).forEach { (target, label, symbol) ->
                     NavigationBarItem(selected = page == target, onClick = { page = target },
                         icon = { Text(symbol, fontSize = 22.sp) }, label = { Text(label) })
                 }
@@ -74,7 +74,7 @@ fun TeslaTempoApp(model: DashboardViewModel, personal: PersonalViewModel, histor
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Column {
                         Text("TESLA TEMPO", style = MaterialTheme.typography.labelSmall, letterSpacing = 3.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text(when (page) { "relay" -> "Mon relais"; "demo", "plan" -> "Planification"; "profile" -> "Mon profil"; "tempo" -> "Tempo"; "history" -> "Historique"; "observations" -> "Relevés"; else -> "Ma recharge" }, style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
+                        Text(when (page) { "drive" -> "Conduite"; "relay" -> "Mon relais"; "demo", "plan" -> "Planification"; "profile" -> "Mon profil"; "tempo" -> "Tempo"; "history" -> "Historique"; "observations" -> "Relevés"; else -> "Ma recharge" }, style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
                     }
                     if (page != "home") TextButton(onClick = { page = "home" }) { Text("Accueil") }
                 }
@@ -87,7 +87,9 @@ fun TeslaTempoApp(model: DashboardViewModel, personal: PersonalViewModel, histor
                         Text(message, Modifier.padding(16.dp))
                     }
                 }
-                if (page == "demo") {
+                if (page == "drive") {
+                    org.teslatempo.drive.DriveScreen()
+                } else if (page == "demo") {
                     PlannerScreen(historyState, history::save)
                 } else if (page == "observations") {
                     ObservationsScreen(state.dashboard?.selected, observations)
