@@ -62,7 +62,7 @@ services:
     networks: [logs, frontend]
     logging: {driver: json-file, options: {max-size: "5m", max-file: "2"}}
   collector:
-    image: teslatempo-diagnostics:0.1.0
+    image: teslatempo-diagnostics:0.1.1
     build:
       context: ../..
       dockerfile: services/diagnostics/Dockerfile

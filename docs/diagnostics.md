@@ -117,12 +117,28 @@ relais principal doit continuer à fonctionner.
 
 ## Accès depuis le PC
 
-Grafana écoute uniquement sur la boucle locale du NAS, port 13000. Loki n'a aucun
+Par défaut, Grafana écoute uniquement sur la boucle locale du NAS, port 13000. Loki n'a aucun
 port publié. Aucune redirection Freebox n'est nécessaire.
 
 ```bash
 bash scripts/logs-tunnel.sh admin@ADRESSE_LAN_DU_NAS -i ~/.ssh/cle_nas
 ```
+
+Si le NAS refuse le transfert SSH, configurer via les réglages SSH de TrueNAS
+une exception limitée au compte utilisé et à ce seul port, plutôt qu'activer le
+transfert global. Exemple à adapter au nom du compte :
+
+```text
+Match User utilisateur_ssh
+    AllowTcpForwarding local
+    PermitOpen 127.0.0.1:13000
+Match all
+```
+
+Sauvegarder les options existantes et valider la syntaxe avec `sshd -t` avant
+application. Reconnecter le tunnel après la modification : une session SSH déjà
+ouverte conserve ses anciennes permissions. Ne pas éditer directement les fichiers
+générés par TrueNAS.
 
 Garder le terminal ouvert, puis consulter `http://localhost:13000`. Le trajet
 PC–NAS est chiffré par SSH. Il fonctionne sur le réseau local ou via le VPN quand
@@ -136,6 +152,57 @@ référence dans **Identifiant requête ou rapport**. Les autres panneaux montre
 les erreurs et les transitions de disponibilité. Grafana sert aussi les requêtes
 Loki via sa source de données authentifiée. Les proxys d'environnement sont
 neutralisés pour les communications internes de cette stack.
+
+### Accès LAN et bouton Web UI dans TrueNAS
+
+Pour ouvrir Grafana depuis les appareils du réseau local sans tunnel, adapter la
+configuration Compose de l'application **teslatempo-logs → Edit**. Remplacer
+`192.0.2.10` ci-dessous (adresse d'exemple) par l'adresse LAN fixe du NAS :
+
+```yaml
+# À ajouter à la racine du Compose, à côté de services et networks :
+x-portals:
+  - name: Web UI
+    scheme: http
+    host: 192.0.2.10
+    port: 13000
+    path: /d/teslatempo-diagnostics
+```
+
+Dans le service `grafana` existant, remplacer `ports` par :
+
+```yaml
+ports:
+  - "127.0.0.1:13000:3000"
+  - "192.0.2.10:13000:3000"
+```
+
+Dans son `environment` existant, régler
+`GF_SERVER_ROOT_URL: http://192.0.2.10:13000`. Conserver les autres paramètres,
+notamment l'authentification. TrueNAS 27.0.0-RC.1 sait lire `x-portals`, mais
+ne régénère pas automatiquement les portails lors de la modification d'une
+application Compose personnalisée existante. Sur cette version, après sauvegarde
+de ses métadonnées, lancer dans le shell du NAS :
+
+```bash
+sudo python3 - <<'PY'
+from middlewared.plugins.apps.ix_apps.metadata import update_app_metadata_for_portals
+update_app_metadata_for_portals('teslatempo-logs', '1.0.0')
+PY
+sudo midclt call -j app.metadata.generate
+```
+
+Cette fonction interne dépend de la version de TrueNAS : vérifier sa disponibilité
+avant utilisation sur une autre version. `1.0.0` est la version de l'application
+personnalisée TrueNAS, pas celle de Grafana. Actualiser la page Applications : le
+bouton **Web UI** ouvre directement le tableau de bord. Refaire cette actualisation
+si l'adresse du portail change lors d'une modification ultérieure.
+
+Ce mode HTTP convient à un réseau local de confiance ; les échanges ne sont pas
+chiffrés entre le navigateur et le NAS. Garder le tunnel SSH pour un accès chiffré,
+ou utiliser un reverse proxy HTTPS. Ne pas rediriger ce port sur la box Internet.
+Loki conserve son réseau interne sans port publié. Ne pas modifier directement
+les métadonnées générées par TrueNAS : le portail reste dans le Compose.
 
 ## Export sans Grafana
 

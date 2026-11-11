@@ -4,7 +4,7 @@ import os
 import time
 import urllib.request
 from pathlib import Path
-from schema import validate, event
+from schema import validate, event, UUID
 
 STATE=Path('/state/collector.json')
 LOGS=Path('/logs/events.json')
@@ -30,7 +30,7 @@ def step(state):
             health=r.status==200 and json.loads(r.read(2048)).get('status')=='ok'
     except Exception:health=False
     if health!=state['health']:
-        state['pending'].append(event('collector','health','recovered' if health else 'unavailable','0.1.0'))
+        state['pending'].append(event('collector','health','recovered' if health else 'unavailable','0.1.1'))
         state['pending']=state['pending'][-100:];state['health']=health
     try:rows=load(LOGS,262144)
     except Exception:rows=[]
@@ -60,13 +60,23 @@ def step(state):
     save(state)
 
 
-def main():
+def restore_state():
     try:
         state=load(STATE,524288)
-        assert isinstance(state['seen'],list) and len(state['seen'])<=2000
-        assert isinstance(state['pending'],list) and len(state['pending'])<=100
-        assert state['health'] in (True,False,None)
-    except Exception:state={'seen':[],'pending':[],'health':None}
+        if not isinstance(state,dict):raise ValueError('state')
+        seen=state['seen'];pending=state['pending']
+        if not isinstance(seen,list) or len(seen)>2000 or any(not isinstance(x,str) or not UUID.fullmatch(x) for x in seen):raise ValueError('seen')
+        if not isinstance(pending,list) or len(pending)>100:raise ValueError('pending')
+        pending=[validate(row) for row in pending]
+        if any(row['source']!='collector' or row['operation']!='health' for row in pending):raise ValueError('source')
+        if state['health'] is not None and type(state['health']) is not bool:raise ValueError('health')
+        return {'seen':seen,'pending':pending,'health':state['health']}
+    except (OSError,ValueError,TypeError,KeyError):
+        return {'seen':[],'pending':[],'health':None}
+
+
+def main():
+    state=restore_state()
     while True:
         try:step(state)
         except Exception:pass  # No raw exception strings, request bodies or credentials in stdout.

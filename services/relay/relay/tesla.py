@@ -27,7 +27,16 @@ class Tesla:
 
     def request(self, method, url, **kwargs):
         try:
-            response = self.http.request(method, url, **kwargs)
+            # Bound decompressed bytes even when upstream omits Content-Length.
+            with self.http.stream(method, url, **kwargs) as response:
+                body = bytearray()
+                for chunk in response.iter_bytes(chunk_size=65536):
+                    body.extend(chunk)
+                    if len(body) > 1_048_576:
+                        raise UpstreamError(502, "invalid_tesla_response")
+                headers = {key: value for key, value in response.headers.items()
+                           if key.lower() not in {"content-encoding", "content-length"}}
+                response = httpx.Response(response.status_code, headers=headers, content=bytes(body))
         except httpx.HTTPError:
             raise UpstreamError() from None
         if response.status_code == 429:
@@ -40,8 +49,11 @@ class Tesla:
                 except (ValueError, TypeError, OverflowError):
                     delay = 60
             raise UpstreamError(429, "tesla_rate_limited", max(60, delay))
-        if response.status_code in {401, 403}:
+        if response.status_code == 401:
             raise UpstreamError(401, "tesla_authorization_required")
+        if response.status_code == 403:
+            # Missing permissions do not prove the OAuth session has expired.
+            raise UpstreamError(403, "tesla_permission_denied")
         if response.status_code == 400:
             try:
                 error = response.json().get("error")

@@ -80,3 +80,5 @@ pas un format d'import du profil ou de restauration de l'application.
 
 Sources : [signature Android](https://developer.android.com/studio/publish/app-signing),
 [permission de notification](https://developer.android.com/develop/ui/views/notifications/notification-permission).
+
+Pour la version 0.10.0 et les essais sur téléphone, voir [la procédure de test et publication](release-0.10.0.md).

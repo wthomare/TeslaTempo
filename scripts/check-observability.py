@@ -45,7 +45,7 @@ with tempfile.TemporaryDirectory(prefix='teslatempo-logs-test-') as tmp:
     run(['docker','network','create',network])
     try:
         run(['docker','run','-d','--name',relay,'--network',network,'--network-alias','relay','--user',f'{os.getuid()}:{os.getgid()}',
-             '-v',str(data)+':/data','-v',str(secret)+':/run/secrets:ro','teslatempo-relay:0.5.0'])
+             '-v',str(data)+':/data','-v',str(secret)+':/run/secrets:ro','teslatempo-relay:0.5.1'])
         run(compose+['up','-d','--no-build'],env=env)
         collector=run(compose+['ps','-q','collector'],env=env).strip()
         def read_loki():

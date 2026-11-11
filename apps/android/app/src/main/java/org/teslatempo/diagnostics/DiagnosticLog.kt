@@ -76,7 +76,7 @@ object DiagnosticLog {
         require(rows.isNotEmpty() && rows.size<=100 && rows.all(::valid))
         val credentials=CredentialStore(checkNotNull(context)).load() ?: error("Configurez le relais avant l’envoi.")
         val id=UUID.randomUUID().toString()
-        val report=DiagnosticReport(id,true,rows.map { it.copy(report_id=id) })
+        val report=DiagnosticReport(id,true,rows.map { it.copy(id=UUID.randomUUID().toString(),report_id=id) })
         check(prefs().edit().putString("pending",gson.toJson(PendingReport(destination(credentials),report))).commit())
         id
     }
@@ -93,7 +93,7 @@ object DiagnosticLog {
                     require(value.report.events.size in 1..100 && value.report.events.all { valid(it) && it.report_id==value.report.report_id })
                 }
             }.getOrNull()
-            val c=CredentialStore(checkNotNull(context)).load()
+            val c=runCatching { CredentialStore(checkNotNull(context)).load() }.getOrNull()
             if(pending==null || c==null || destination(c)!=pending.destination || pending.report.events.any { !valid(it) }) {
                 synchronized(lock) { if(p.getString("pending",null)==raw)p.edit().remove("pending").commit() }
                 return false

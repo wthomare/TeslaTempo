@@ -49,6 +49,25 @@ class DiagnosticsTest {
             } finally { DiagnosticLog.clear();if(before==null)store.clear() else store.save(before) }
         } }
     }
+    @Test fun newConfirmedReportsKeepCorrelationWithoutBeingDeduplicatedTogether() {
+        server().use { s ->
+            val store=CredentialStore(compose.activity);val before=store.load();DiagnosticLog.clear()
+            try {
+                store.save(credentials(s));DiagnosticLog.record("status","network_error",immediate=true)
+                val rows=DiagnosticLog.snapshot().takeLast(1)
+                val ids=mutableListOf<String>()
+                repeat(2) {
+                    val report=DiagnosticLog.consent(rows)
+                    s.enqueue(MockResponse().setBody("""{"accepted":1,"report_id":"$report"}"""))
+                    assertTrue(DiagnosticLog.retryPending(true))
+                    val row=JsonParser.parseString(s.takeRequest().body.readUtf8()).asJsonObject.getAsJsonArray("events")[0].asJsonObject
+                    ids.add(row.get("id").asString)
+                    assertEquals(rows[0].request_id,row.get("request_id").asString)
+                }
+                assertNotEquals(ids[0],ids[1])
+            } finally { DiagnosticLog.clear();if(before==null)store.clear() else store.save(before) }
+        }
+    }
     @Test fun reportRequiresExplicitConfirmation() {
         server().use { s ->
             s.dispatcher=object: Dispatcher() { override fun dispatch(request: RecordedRequest): MockResponse {

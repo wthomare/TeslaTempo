@@ -48,5 +48,5 @@ for attempt in range(20):
   time.sleep(.25)
 """
         subprocess.run(['docker','run','--rm','--network','container:'+name,'-v',tmp+':/run/secrets:ro',
-            '--user',f'{os.getuid()}:{os.getgid()}','--entrypoint','python','teslatempo-relay:0.5.0','-c',check],check=True)
+            '--user',f'{os.getuid()}:{os.getgid()}','--entrypoint','python','teslatempo-relay:0.5.1','-c',check],check=True)
     finally:subprocess.run(['docker','rm','-f',name],check=True,stdout=subprocess.DEVNULL)

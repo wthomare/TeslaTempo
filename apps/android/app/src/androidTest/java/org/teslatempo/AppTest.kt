@@ -32,6 +32,29 @@ class AppTest {
             assertEquals(before,CredentialStore(compose.activity).load()?.url)
         }
     }
+    @Test fun relayCanBeSavedBeforeVehicleIsAvailable() {
+        val context = compose.activity.applicationContext
+        val store = CredentialStore(context)
+        store.clear()
+        val server = okhttp3.mockwebserver.MockWebServer()
+        server.start(java.net.InetAddress.getByName("127.0.0.1"), 0)
+        try {
+            server.enqueue(okhttp3.mockwebserver.MockResponse().setBody(
+                """{"mode":"tesla","simulated":false,"version":"0.5.1","tesla_connected":false,"vehicle_commands_enabled":false}"""))
+            server.enqueue(okhttp3.mockwebserver.MockResponse().setBody(
+                """{"mode":"tesla","simulated":false,"tesla_connected":false}"""))
+            val model = org.teslatempo.ui.DashboardViewModel(store)
+            compose.waitUntil(10000) { !model.state.value.loading }
+            val url = server.url("/").toString()
+            compose.runOnIdle { model.connect(url, "test-private-token") {} }
+            compose.waitUntil(10000) { !model.state.value.loading && model.state.value.relayUrl == url }
+            assertEquals(url, store.load()?.url)
+            assertEquals("test-private-token", store.load()?.token)
+            assertTrue(model.state.value.error.orEmpty().contains("compte Tesla non connecté"))
+            assertEquals(2, server.requestCount)
+        } finally { server.shutdown(); store.clear() }
+    }
+
     @Test fun demoAndSettings() {
         compose.onNodeWithText("Réglages").performScrollTo().performClick()
         compose.onNodeWithText("Démonstration", useUnmergedTree = true).performScrollTo().performClick()

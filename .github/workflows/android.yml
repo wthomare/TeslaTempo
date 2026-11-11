@@ -2,9 +2,9 @@ name: Android checks
 
 on:
   push:
-    paths: ['apps/android/**', '.github/workflows/android.yml']
+    paths: ['apps/android/**', 'scripts/audit-android-dependencies.py', '.github/workflows/android.yml']
   pull_request:
-    paths: ['apps/android/**', '.github/workflows/android.yml']
+    paths: ['apps/android/**', 'scripts/audit-android-dependencies.py', '.github/workflows/android.yml']
 
 permissions:
   contents: read
@@ -18,11 +18,14 @@ jobs:
         working-directory: apps/android
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
         with:
           distribution: temurin
           java-version: '21'
       - name: Install Android SDK components
         run: '"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0"'
       - name: Build, test and lint
-        run: ./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug --console=plain
+        run: ./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug :app:writeReleaseDependencyInventory --console=plain
+      - name: Audit resolved Android dependencies
+        working-directory: .
+        run: python3 scripts/audit-android-dependencies.py

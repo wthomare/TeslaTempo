@@ -1,5 +1,16 @@
 # Historique des versions
 
+## Android 0.10.0 / relais 0.5.1 / collecteur 0.1.1
+
+- Connexion au relais enregistrable avant association Tesla ou disponibilité du véhicule.
+- Création de clé Android sérialisée ; rapports diagnostiques distincts lors de nouveaux consentements.
+- Authentification et limitation de fréquence avant lecture JSON ; réponses Tesla bornées.
+- Un refus Tesla 403 conserve la session et affiche une erreur de droits distincte du jeton du relais.
+- Reprise du collecteur après état local corrompu, y compris des identifiants non valides.
+- Audits CI Python/Maven, contrôle des fichiers privés, actions épinglées et publication APK signée vérifiée.
+- Documentation de l’accès Grafana LAN / Web UI TrueNAS et procédure de test Android.
+
+
 ## Android 0.9.0 / relais 0.5.0
 
 - Diagnostics à liste fermée, UUID de corrélation commun, code/durée/version et

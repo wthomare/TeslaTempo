@@ -13,8 +13,8 @@ android {
         applicationId 'org.teslatempo'
         minSdk 33
         targetSdk 36
-        versionCode 9
-        versionName '0.9.0'
+        versionCode 10
+        versionName '0.10.0'
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
     signingConfigs {
@@ -59,4 +59,17 @@ dependencies {
     androidTestImplementation 'androidx.test:runner:1.6.2'
     androidTestImplementation 'com.squareup.okhttp3:mockwebserver:4.12.0'
     debugImplementation 'androidx.compose.ui:ui-test-manifest'
+}
+
+// Public dependency inventory for release audits; no environment or signing values.
+tasks.register('writeReleaseDependencyInventory') {
+    doLast {
+        def modules = configurations.releaseRuntimeClasspath.resolvedConfiguration.resolvedArtifacts.collect {
+            def module = it.moduleVersion.id
+            [name: "${module.group}:${module.name}", version: module.version]
+        }.unique().sort { a, b -> a.name <=> b.name }
+        def output = layout.buildDirectory.file('reports/security/dependencies.json').get().asFile
+        output.parentFile.mkdirs()
+        output.text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(modules))
+    }
 }

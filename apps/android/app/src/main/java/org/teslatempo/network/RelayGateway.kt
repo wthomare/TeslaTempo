@@ -52,6 +52,7 @@ class RelayGateway(
                         (error.get("error") ?: error.get("detail"))?.asString
                     }.getOrNull()
                     if (code == "tesla_authorization_required") throw RelayException("Le relais a répondu, mais la session Tesla doit être reconnectée côté relais.")
+                    if (code == "tesla_permission_denied") throw RelayException("Tesla refuse cet accès. Vérifiez les autorisations du compte et du véhicule ; le jeton du relais a été accepté.")
                     if (code == "vehicle_or_service_unavailable") throw RelayException("Véhicule ou service Tesla indisponible. Aucun réveil automatique n’a été envoyé.")
                     throw RelayException(when (response.code) {
                     401, 403 -> "Accès refusé. Vérifiez le jeton du relais."

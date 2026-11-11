@@ -267,3 +267,54 @@ def test_timeout_does_not_retry_or_discard_refresh_token(config):
     assert len(calls) == 1
     assert tesla.store.load()["refresh_token"] == "old-refresh"
     tesla.http.close()
+
+
+def test_authentication_precedes_json_validation_and_size_limit(config):
+    with TestClient(create_app(config, httpx.MockTransport(no_network))) as client:
+        for body in (b'{invalid', b'x' * 70000):
+            response = client.post('/v1/diagnostics/events', content=body,
+                                   headers={'Content-Type': 'application/json'})
+            assert response.status_code == 401
+            assert response.headers['Cache-Control'] == 'no-store'
+        response = client.post('/v1/diagnostics/events', content=b'x' * 70000,
+                               headers=auth(config))
+        assert response.status_code == 413
+        assert response.headers['Cache-Control'] == 'no-store'
+        assert response.headers['X-Request-ID']
+
+
+def test_forbidden_does_not_erase_valid_tesla_session(config):
+    def forbidden(request):
+        return httpx.Response(403)
+    tesla = connected_tesla(config, forbidden)
+    # Avoid a refresh: test vehicle permissions independently of token validity.
+    tesla.store.save({'access_token': 'valid', 'refresh_token': 'keep-me', 'expires_at': time.time() + 3600})
+    try:
+        with pytest.raises(UpstreamError) as failure:
+            tesla.get('/api/1/vehicles')
+        assert failure.value.status == 403
+        assert failure.value.code == 'tesla_permission_denied'
+        assert tesla.store.load()['refresh_token'] == 'keep-me'
+    finally:
+        tesla.http.close()
+
+
+def test_tesla_response_size_is_bounded(config):
+    tesla = connected_tesla(config, lambda request: httpx.Response(200, content=b' ' * 1_048_577))
+    try:
+        with pytest.raises(UpstreamError) as failure:
+            tesla.request('GET', 'https://example.invalid')
+        assert failure.value.code == 'invalid_tesla_response'
+    finally:
+        tesla.http.close()
+
+
+def test_compressed_tesla_response_is_decoded_once(config):
+    import gzip
+    compressed = gzip.compress(b'{"response": []}')
+    tesla = connected_tesla(config, lambda request: httpx.Response(
+        200, headers={"Content-Encoding": "gzip"}, content=compressed))
+    try:
+        assert tesla.request('GET', 'https://example.invalid') == {"response": []}
+    finally:
+        tesla.http.close()

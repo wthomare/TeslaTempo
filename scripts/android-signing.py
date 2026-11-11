@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import secrets
 import shutil
@@ -45,12 +46,16 @@ def main():
         signer = sdk/'build-tools/36.0.0/apksigner'
         apk = ROOT/'apps/android/app/build/outputs/apk/release/app-release.apk'
         result = subprocess.run([str(signer),'verify','--verbose','--print-certs',str(apk)],capture_output=True,text=True,check=True)
-        output = ROOT/'apps/android/app/build/distribution';output.mkdir(exist_ok=True)
-        target=output/'teslatempo-release.apk';shutil.copyfile(apk,target)
-        (output/'SHA256SUMS').write_text(hashlib.sha256(target.read_bytes()).hexdigest()+'  '+target.name+'\n')
         # Print only the public certificate digest, not environment paths/identity secrets.
         certificate = [line for line in result.stdout.splitlines() if 'certificate SHA-256 digest:' in line]
         if len(certificate)!=1: raise SystemExit('Signature inattendue : ne pas distribuer.')
+        version = re.search(r"versionName '([^']+)'", (ROOT/'apps/android/app/build.gradle').read_text()).group(1)
+        subprocess.run(['python3', str(ROOT/'scripts/verify-apk.py'), str(apk), '--sdk', str(sdk),
+                        '--certificate', certificate[0].split(': ')[-1], '--version', version], check=True)
+        output = ROOT/'apps/android/app/build/distribution';output.mkdir(exist_ok=True)
+        target=output/'teslatempo-release.apk'
+        temporary=output/'teslatempo-release.apk.tmp';shutil.copyfile(apk,temporary);temporary.replace(target)
+        (output/'SHA256SUMS').write_text(hashlib.sha256(target.read_bytes()).hexdigest()+'  '+target.name+'\n')
         (output/'SIGNATURE.txt').write_text(certificate[0]+'\n')
         print('APK signé et vérifié :',target)
         print(certificate[0])

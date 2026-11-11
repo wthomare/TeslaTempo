@@ -51,7 +51,7 @@ Test Docker reproductible, après construction des deux images :
 .venv/bin/python scripts/check-command-proxy.py
 ```
 
-Le test utilise l'image cliente `teslatempo-relay:0.4.0`, crée des clés temporaires,
+Le test utilise l'image cliente `teslatempo-relay:0.5.1`, crée des clés temporaires,
 vérifie TLS et le refus d'une requête sans authentification, puis supprime ses
 conteneurs. Le proxy testé n'a aucun réseau externe.
 

@@ -16,7 +16,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: pip install -r services/relay/requirements-dev.txt
-      - run: docker build -t teslatempo-relay:0.5.0 services/relay
-      - run: docker build -t teslatempo-diagnostics:0.1.0 -f services/diagnostics/Dockerfile .
+      - run: docker build -t teslatempo-relay:0.5.1 services/relay
+      - run: docker build -t teslatempo-diagnostics:0.1.1 -f services/diagnostics/Dockerfile .
       - name: Test correlation, privacy, authentication and service outages
         run: python scripts/check-observability.py

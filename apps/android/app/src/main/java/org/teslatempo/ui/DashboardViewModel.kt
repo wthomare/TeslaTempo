@@ -3,6 +3,7 @@ package org.teslatempo.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -80,17 +81,19 @@ class DashboardViewModel(private val store: CredentialStore) : ViewModel() {
             try {
                 // Always require a token for a new address; never reuse one across hosts.
                 val candidate = RelayCredentials(url.trim(), token.trim())
-                val dashboard = withContext(Dispatchers.IO) {
-                    val result = RelayGateway(candidate, BuildConfig.DEBUG).load()
+                withContext(Dispatchers.IO) {
+                    // Save a valid relay even before delivery, or while the car is asleep.
+                    RelayGateway(candidate, BuildConfig.DEBUG).diagnose()
                     store.save(candidate)
-                    result
                 }
                 credentials = candidate
-                mutable.value = ScreenState(false, dashboard, candidate.url)
+                mutable.value = ScreenState(false, relayUrl = candidate.url)
                 onSuccess()
+                refresh()
             } catch (e: RelayException) {
                 mutable.value = ScreenState(false, relayUrl = credentials?.url, error = e.message)
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 mutable.value = ScreenState(false, relayUrl = credentials?.url, error = "Impossible de protéger la configuration sur cet appareil.")
             }
         }

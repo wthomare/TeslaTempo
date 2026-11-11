@@ -16,10 +16,10 @@ import javax.crypto.spec.GCMParameterSpec
 class CredentialStore(context: Context) {
     private val prefs = context.getSharedPreferences("relay_credentials", Context.MODE_PRIVATE)
     private val alias = "teslatempo.relay.v1"
-    private fun key(): SecretKey {
+    private fun key(): SecretKey = synchronized(keyLock) {
         val store = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
-        (store.getKey(alias, null) as? SecretKey)?.let { return it }
-        return KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore").apply {
+        (store.getKey(alias, null) as? SecretKey)?.let { return@synchronized it }
+        KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore").apply {
             init(KeyGenParameterSpec.Builder(alias, KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
                 .setBlockModes(KeyProperties.BLOCK_MODE_GCM).setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE).build())
         }.generateKey()
@@ -40,4 +40,5 @@ class CredentialStore(context: Context) {
         check(prefs.edit().putString("sealed", sealed).commit())
     }
     fun clear() { check(prefs.edit().clear().commit()) }
+    companion object { private val keyLock = Any() }
 }

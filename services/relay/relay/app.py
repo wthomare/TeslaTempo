@@ -87,6 +87,13 @@ def create_app(config=None, transport=None):
         supplied = request.headers.get('X-Request-ID', '')
         request_id = supplied if UUID.fullmatch(supplied) else str(uuid.uuid4())
         request.state.request_id = request_id
+        # Reject unauthenticated/rate-limited requests before reading or parsing JSON.
+        if request.url.path.startswith("/v1/"):
+            try:
+                authenticated(request)
+            except HTTPException as error:
+                return JSONResponse({"detail": error.detail}, status_code=error.status_code,
+                                    headers={**(error.headers or {}), "Cache-Control": "no-store", "X-Request-ID": request_id})
         if request.url.path in ("/v1/chatgpt/explain", "/v1/diagnostics/events"):
             maximum = 65536 if request.url.path == "/v1/diagnostics/events" else 32768
             size = 0
@@ -94,7 +101,8 @@ def create_app(config=None, transport=None):
             async for chunk in request.stream():
                 size += len(chunk)
                 if size > maximum:
-                    return JSONResponse({"error": "request_too_large"}, status_code=413)
+                    return JSONResponse({"error": "request_too_large"}, status_code=413,
+                                        headers={"Cache-Control": "no-store", "X-Request-ID": request_id})
                 parts.append(chunk)
             request._body = b"".join(parts)
         try:
@@ -138,6 +146,8 @@ def create_app(config=None, transport=None):
                             headers={"Retry-After": str(error.retry_after)} if error.status == 429 else None)
 
     def authenticated(request: Request):
+        if getattr(request.state, "authenticated", False):
+            return
         provided = request.headers.get("Authorization", "")
         if not hmac.compare_digest(provided.encode(), ("Bearer " + config.api_token).encode()):
             raise HTTPException(401, "relay_authentication_required", headers={"WWW-Authenticate": "Bearer"})
