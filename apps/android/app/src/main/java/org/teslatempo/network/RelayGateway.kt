@@ -10,7 +10,7 @@ import org.teslatempo.domain.*
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
-class RelayException(message: String) : IOException(message)
+class RelayException(message: String, val authenticationRejected: Boolean = false) : IOException(message)
 
 // Deliberately not a data class: toString must never expose the token.
 class RelayCredentials(val url: String, val token: String)
@@ -61,7 +61,7 @@ class RelayGateway(
                     429 -> "Trop de requêtes. Patientez une minute avant de réessayer."
                     in 300..399 -> "Redirection refusée. Configurez directement l’URL HTTPS finale."
                     else -> "Le relais est indisponible (HTTP ${response.code})."
-                    })
+                    }, authenticationRejected = response.code in setOf(401, 403))
                 }
                 val body = response.body ?: throw RelayException("Réponse du relais vide.")
                 // Bound input before parsing, including responses without Content-Length.

@@ -1,5 +1,13 @@
 # Historique des versions
 
+## Android 0.11.0
+
+- Refonte sombre de l'accueil, navigation persistante et détails secondaires repliables.
+- État authentifié du relais visible, distinct de la session Tesla et du véhicule.
+- Contrôle de disponibilité au premier plan toutes les 60 secondes, sans appel Tesla.
+- États explicites pour jeton refusé, indisponibilité et retour au premier plan.
+
+
 ## Android 0.10.0 / relais 0.5.1 / collecteur 0.1.1
 
 - Connexion au relais enregistrable avant association Tesla ou disponibilité du véhicule.

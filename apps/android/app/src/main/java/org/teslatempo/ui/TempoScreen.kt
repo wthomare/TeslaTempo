@@ -22,16 +22,22 @@ fun TempoSummary(state: PersonalState, refresh: () -> Unit, details: () -> Unit)
     val today = state.now.atZone(PARIS).toLocalDate()
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("Tempo · couleurs publiées", style = MaterialTheme.typography.titleLarge)
-            for ((label, date) in listOf("Aujourd’hui" to today, "Demain" to today.plusDays(1))) {
-                val observation = state.tempo.color(date)
-                Text("$label ($date) : ${colorName(observation?.color)}")
-                observation?.let { Text("Cache vérifié le ${localTime(it.checkedAt)}", style = MaterialTheme.typography.bodySmall) }
+            Text("Tempo", style = MaterialTheme.typography.titleLarge)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                for ((label, date) in listOf("Aujourd’hui" to today, "Demain" to today.plusDays(1))) {
+                    val observation = state.tempo.color(date)
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(colorName(observation?.color), style = MaterialTheme.typography.titleMedium)
+                        Text(date.toString(), style = MaterialTheme.typography.labelSmall)
+                        observation?.let { Text("Vérifié le ${localTime(it.checkedAt)}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                    }
+                }
             }
             if (state.now.atZone(PARIS).hour < 6) Text("Avant 6 h : HC de la veille (${colorName(state.tempo.color(today.minusDays(1))?.color)}).")
             if (state.syncing) LinearProgressIndicator(Modifier.fillMaxWidth())
             state.syncMessage?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
-            Text("Source indépendante : calendrier-tempo.fr. Les dates du cache restent affichées en cas d’échec réseau.", style = MaterialTheme.typography.bodySmall)
+            Text("Source indépendante · calendrier-tempo.fr", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             OutlinedButton(onClick = refresh, enabled = state.ready && !state.syncing) { Text("Actualiser Tempo") }
             TextButton(onClick = details) { Text("Voir les tarifs et la source") }
         }

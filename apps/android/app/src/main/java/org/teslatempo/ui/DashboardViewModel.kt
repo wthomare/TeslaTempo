@@ -16,6 +16,16 @@ import org.teslatempo.network.RelayException
 import org.teslatempo.network.RelayGateway
 import org.teslatempo.security.CredentialStore
 
+enum class RelayLink { NOT_CONFIGURED, UNKNOWN, CONNECTED, UNAVAILABLE, REJECTED }
+data class RelayHealth(
+    val link: RelayLink = RelayLink.NOT_CONFIGURED,
+    val checking: Boolean = false,
+    val checkedAt: java.time.Instant? = null,
+    val teslaConnected: Boolean? = null,
+    val simulated: Boolean = false,
+    val detail: String? = null,
+)
+
 data class ScreenState(
     val loading: Boolean = true,
     val dashboard: Dashboard? = null,
@@ -28,11 +38,42 @@ class DashboardViewModel(private val store: CredentialStore) : ViewModel() {
     private val mutable = MutableStateFlow(ScreenState())
     val state = mutable.asStateFlow()
     private var credentials: RelayCredentials? = null
+    private val healthMutable = MutableStateFlow(RelayHealth())
+    val health = healthMutable.asStateFlow()
+    private val healthMutex = kotlinx.coroutines.sync.Mutex()
+
+    // Only /v1/status: validates the saved token without calling Tesla.
+    suspend fun checkRelay() {
+        if (!healthMutex.tryLock()) return
+        val candidate = credentials
+        try {
+            if (candidate == null) return
+            healthMutable.value = healthMutable.value.copy(checking = true)
+            try {
+                val result = withContext(Dispatchers.IO) { RelayGateway(candidate, BuildConfig.DEBUG).diagnose() }
+                if (credentials === candidate) healthMutable.value = RelayHealth(
+                    RelayLink.CONNECTED, checkedAt = java.time.Instant.now(),
+                    teslaConnected = result.teslaConnected, simulated = result.simulated)
+            } catch (e: RelayException) {
+                if (credentials === candidate) healthMutable.value = RelayHealth(
+                    if (e.authenticationRejected) RelayLink.REJECTED else RelayLink.UNAVAILABLE,
+                    checkedAt = java.time.Instant.now(), detail = e.message)
+            }
+        } finally {
+            healthMutable.value = healthMutable.value.copy(checking = false)
+            healthMutex.unlock()
+        }
+    }
+
+    fun pauseHealth() {
+        if (credentials != null) healthMutable.value = healthMutable.value.copy(link = RelayLink.UNKNOWN, checking = false)
+    }
 
     init {
         viewModelScope.launch {
             try {
                 credentials = withContext(Dispatchers.IO) { store.load() }
+                healthMutable.value = RelayHealth(if (credentials == null) RelayLink.NOT_CONFIGURED else RelayLink.UNKNOWN)
                 mutable.value = ScreenState(loading = false, relayUrl = credentials?.url)
                 refresh()
             } catch (_: Exception) {
@@ -81,12 +122,15 @@ class DashboardViewModel(private val store: CredentialStore) : ViewModel() {
             try {
                 // Always require a token for a new address; never reuse one across hosts.
                 val candidate = RelayCredentials(url.trim(), token.trim())
-                withContext(Dispatchers.IO) {
+                val result = withContext(Dispatchers.IO) {
                     // Save a valid relay even before delivery, or while the car is asleep.
-                    RelayGateway(candidate, BuildConfig.DEBUG).diagnose()
+                    val result = RelayGateway(candidate, BuildConfig.DEBUG).diagnose()
                     store.save(candidate)
+                    result
                 }
                 credentials = candidate
+                healthMutable.value = RelayHealth(RelayLink.CONNECTED, checkedAt = java.time.Instant.now(),
+                    teslaConnected = result.teslaConnected, simulated = result.simulated)
                 mutable.value = ScreenState(false, relayUrl = candidate.url)
                 onSuccess()
                 refresh()
@@ -106,6 +150,7 @@ class DashboardViewModel(private val store: CredentialStore) : ViewModel() {
             try {
                 withContext(Dispatchers.IO) { store.clear() }
                 credentials = null
+                healthMutable.value = RelayHealth()
                 mutable.value = ScreenState(false, DemoGateway().load())
                 onSuccess()
             } catch (_: Exception) {

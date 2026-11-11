@@ -21,7 +21,7 @@ class AppTest {
         okhttp3.mockwebserver.MockWebServer().use { server ->
             server.start(java.net.InetAddress.getByName("127.0.0.1"),0)
             server.enqueue(okhttp3.mockwebserver.MockResponse().setBody("""{"mode":"tesla","simulated":false,"version":"0.3.0","tesla_connected":false,"vehicle_commands_enabled":false}"""))
-            compose.onNodeWithText("Réglages").performScrollTo().performClick()
+            compose.onNodeWithText("Réglages").performClick()
             compose.onNodeWithText("URL du relais").performTextReplacement(server.url("/").newBuilder().host("127.0.0.1").build().toString())
             compose.onNodeWithText("Jeton du relais").performTextReplacement("synthetic")
             val before = CredentialStore(compose.activity).load()?.url
@@ -55,13 +55,43 @@ class AppTest {
         } finally { server.shutdown(); store.clear() }
     }
 
+
+    @Test fun healthTracksAuthenticationOutageRecoveryWithoutVehicleCalls() {
+        val store = CredentialStore(compose.activity)
+        store.clear()
+        okhttp3.mockwebserver.MockWebServer().use { server ->
+            server.start(java.net.InetAddress.getByName("127.0.0.1"), 0)
+            val status = """{"mode":"tesla","simulated":false,"version":"0.5.1","tesla_connected":false,"vehicle_commands_enabled":false}"""
+            repeat(2) { server.enqueue(okhttp3.mockwebserver.MockResponse().setBody(status)) }
+            val model = org.teslatempo.ui.DashboardViewModel(store)
+            compose.waitUntil(10000) { !model.state.value.loading }
+            val address = server.url("/").toString()
+            compose.runOnIdle { model.connect(address, "synthetic") {} }
+            compose.waitUntil(10000) { !model.state.value.loading && model.state.value.relayUrl != null }
+            assertEquals(org.teslatempo.ui.RelayLink.CONNECTED, model.health.value.link)
+            assertEquals(false, model.health.value.teslaConnected)
+            for ((code, expected) in listOf(401 to org.teslatempo.ui.RelayLink.REJECTED,
+                    503 to org.teslatempo.ui.RelayLink.UNAVAILABLE, 200 to org.teslatempo.ui.RelayLink.CONNECTED)) {
+                server.enqueue(okhttp3.mockwebserver.MockResponse().setResponseCode(code).setBody(status))
+                runBlocking { model.checkRelay() }
+                assertEquals(expected, model.health.value.link)
+                assertNotNull(model.health.value.checkedAt)
+            }
+            model.pauseHealth()
+            assertEquals(org.teslatempo.ui.RelayLink.UNKNOWN, model.health.value.link)
+            assertEquals(5, server.requestCount)
+            repeat(5) { assertEquals("/v1/status", server.takeRequest().path) }
+        }
+        store.clear()
+    }
+
     @Test fun demoAndSettings() {
-        compose.onNodeWithText("Réglages").performScrollTo().performClick()
+        compose.onNodeWithText("Réglages").performClick()
         compose.onNodeWithText("Démonstration", useUnmergedTree = true).performScrollTo().performClick()
         compose.waitUntil(10_000) { compose.onAllNodesWithText("55 %").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithText("DÉMONSTRATION").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("55 %").performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText("Réglages").performScrollTo().performClick()
+        compose.onNodeWithText("Réglages").performClick()
         compose.onNodeWithText("URL du relais").performTextInput("http://example.org")
         compose.onNodeWithText("Jeton du relais").performTextInput("test-only-token")
         compose.onNodeWithText("Connecter le relais").performScrollTo().performClick()
@@ -69,7 +99,7 @@ class AppTest {
     }
 
     @Test fun plannerSimulationAndValidation() {
-        compose.onNodeWithText("Simuler un plan F20").performClick()
+        compose.onNodeWithText("Simuler un plan F20").performScrollTo().performClick()
         compose.onNodeWithText("SIMULATION · DONNÉES FICTIVES").assertIsDisplayed()
         compose.onNodeWithText("Plan économique · brouillon").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Absence à 8 h").performScrollTo().performClick()
