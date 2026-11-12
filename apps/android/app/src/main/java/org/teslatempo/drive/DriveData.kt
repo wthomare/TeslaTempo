@@ -26,18 +26,17 @@ data class DriveState(
     val running: Boolean = false,
     val connected: Boolean = false,
     val message: String = "Session BLE arrêtée",
-    val speed: Double? = null, val speedAt: Long? = null,
     val battery: Int? = null, val rangeKm: Double? = null, val chargeAt: Long? = null,
     val destination: DriveDestination? = null,
     val overlay: Boolean = false,
 ) {
     fun cockpit(now: Long, showRange: Boolean = true): CockpitText = CockpitText(
-        if (fresh(speedAt, now, 6_000)) speed?.let { "%.0f km/h".format(Locale.FRANCE, it) } ?: "— km/h" else "— km/h",
         if (fresh(chargeAt, now, 60_000)) battery?.let { "$it %" } ?: "— %" else "— %",
         if (!showRange) "" else if (fresh(chargeAt, now, 60_000)) rangeKm?.let { "%.0f km".format(Locale.FRANCE, it) } ?: "— km" else "— km",
     )
 }
-data class CockpitText(val speed: String, val battery: String, val range: String)
+
+data class CockpitText(val battery: String, val range: String)
 
 /** Bounded length-prefixed Tesla BLE frames, including fragmented/coalesced notifications. */
 class BleFrames {

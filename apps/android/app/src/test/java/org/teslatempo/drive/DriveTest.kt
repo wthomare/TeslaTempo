@@ -53,7 +53,7 @@ class DriveTest {
         val hash=byteArrayOf(5)+request.signatureData.getAESGCMPersonalizedData().tag.toByteArray()
         val aad=TeslaSession.digest(TeslaSession.metadata(0 to byteArrayOf(9),1 to byteArrayOf(3),2 to vin.toByteArray(),
             5 to TeslaSession.uint(0),7 to TeslaSession.uint(0),8 to hash,9 to TeslaSession.uint(0)))
-        val body=C.Response.newBuilder().setVehicleData(V.VehicleData.newBuilder().setDriveState(V.DriveState.newBuilder().setSpeed(25))).build().toByteArray()
+        val body=C.Response.newBuilder().setVehicleData(V.VehicleData.newBuilder().setDriveState(V.DriveState.newBuilder().setActiveRouteDestination("Lieu de test"))).build().toByteArray()
         val nonce=ByteArray(12){3};val encrypted=TeslaSession.aes(Cipher.ENCRYPT_MODE,secret,nonce,aad,body)
         if(corrupt) encrypted[0]=(encrypted[0].toInt() xor 1).toByte()
         return reply(request).setProtobufMessageAsBytes(encrypted.dropLast(16).toByteArray().bs())
@@ -62,11 +62,11 @@ class DriveTest {
     }
     @Test fun encryptedReadResponseIsBoundToRequestAndConsumed() {
         val session=connected();val request=U.RoutableMessage.parseFrom(session.readRequest(false));val response=response(request)
-        assertEquals(25, session.readResponse(response).driveState.speed)
+        assertEquals("Lieu de test", session.readResponse(response).driveState.activeRouteDestination)
         assertThrows(DriveFailure::class.java) { session.readResponse(response) }
         // Response counters are scoped to each request, and can restart at zero.
         val second=U.RoutableMessage.parseFrom(session.readRequest(false))
-        assertEquals(25,session.readResponse(response(second)).driveState.speed)
+        assertEquals("Lieu de test",session.readResponse(response(second)).driveState.activeRouteDestination)
     }
     @Test fun mtuFailureAllowsAnotherReadButNeverReturnsData() {
         val session=connected();val request=U.RoutableMessage.parseFrom(session.readRequest(false))
@@ -123,10 +123,8 @@ class DriveTest {
         assertThrows(DriveFailure::class.java) { decoder.append(byteArrayOf(0x7f,0x7f)) }
     }
     @Test fun freshnessAndDemoCannotInventValues() {
-        assertEquals(CockpitText("— km/h","— %","— km"),DriveState().cockpit(10000))
-        val s=DriveState(speed=50.0,speedAt=1000,battery=70,rangeKm=300.0,chargeAt=1000)
-        assertEquals("50 km/h",s.cockpit(2000).speed)
-        assertEquals("— km/h",s.cockpit(8000).speed)
+        assertEquals(CockpitText("— %","— km"),DriveState().cockpit(10000))
+        val s=DriveState(battery=70,rangeKm=300.0,chargeAt=1000)
         assertEquals("70 %",s.cockpit(8000).battery)
         assertEquals("— %",s.cockpit(62000).battery)
         assertFalse(fresh(5000,1000,6000));assertEquals(160.9344,milesToKm(100.0)!!,0.00001)

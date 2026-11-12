@@ -1,5 +1,12 @@
 # Historique des versions
 
+## Android 0.13.0
+
+- Cockpit limité à la batterie et l’autonomie, dans un seul bloc en haut à droite.
+- Suppression de la vitesse, de son option éventuelle et de ses lectures périodiques.
+- Destination Tesla conservée : lecture BLE à la demande puis ouverture explicite dans Waze.
+
+
 ## Android 0.12.0 (expérimental)
 
 - Onglet Conduite : lecture Tesla BLE locale, sans API distante ni GPS téléphone.

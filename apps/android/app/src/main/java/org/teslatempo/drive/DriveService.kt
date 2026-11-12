@@ -34,24 +34,24 @@ data class CockpitPreferences(val size: Float = 32f, val offset: Int = 64, val o
     }
 }
 
-/** Same Android view renders the preview and each small, non-touchable overlay window. */
-class CockpitBlock(context: Context, private val speed: Boolean, private val font: Float) : LinearLayout(context) {
+/** Same Android view renders the preview and the small, non-touchable overlay window. */
+class CockpitBlock(context: Context, private val font: Float) : LinearLayout(context) {
     private val main = TextView(context)
     private val secondary = TextView(context)
     init {
         orientation = VERTICAL
-        gravity = if (speed) Gravity.START else Gravity.END
+        gravity = Gravity.END
         setPadding(12,8,12,8)
         setBackgroundColor(Color.rgb(16,16,16))
         main.maxWidth = (resources.displayMetrics.widthPixels * 0.40f).toInt()
         secondary.maxWidth = main.maxWidth
         main.setTextColor(Color.WHITE); main.textSize = font; main.typeface = android.graphics.Typeface.DEFAULT_BOLD
         secondary.setTextColor(Color.WHITE); secondary.textSize = font * 0.58f
-        addView(main); if (!speed) addView(secondary)
+        addView(main); addView(secondary)
         importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_YES
     }
     fun render(text: CockpitText) {
-        main.text = if (speed) text.speed else text.battery
+        main.text = text.battery
         secondary.text = text.range
         secondary.visibility = if (text.range.isEmpty()) GONE else VISIBLE
     }
@@ -109,22 +109,21 @@ class DriveService : Service() {
                     val wantsDestination = DriveRuntime.requestDestination
                     DriveRuntime.requestDestination = false
                     val now = SystemClock.elapsedRealtime()
-                    try {
-                    ble.send(session.readRequest(false))
-                    val data = withContext(Dispatchers.Default) { session.readResponse(ble.response(session)) }
-                    val drive = data.driveState
-                    val speed = when { drive.hasSpeedFloat() -> drive.speedFloat.toDouble(); drive.hasSpeed() -> drive.speed.toDouble(); else -> null }
-                    val speedKmh = speed?.takeIf { it.isFinite() && it in 0.0..250.0 }?.times(1.609344)
-                    val destination = if (wantsDestination) DriveDestination.from(
-                        if (drive.hasActiveRouteDestination()) drive.activeRouteDestination else null,
-                        if (drive.hasActiveRouteCoordinates()) drive.activeRouteCoordinates.latitude.toDouble() else null,
-                        if (drive.hasActiveRouteCoordinates()) drive.activeRouteCoordinates.longitude.toDouble() else null, now)
-                    else DriveRuntime.mutable.value.destination
-                    DriveRuntime.mutable.value = DriveRuntime.mutable.value.copy(speed = speedKmh, speedAt = now, destination = destination,
-                        message = if (wantsDestination && destination == null) "Destination Tesla indisponible. Vous pouvez utiliser Waze directement." else "Connecté en BLE · lecture seule")
-                    } catch (e: DriveFailure) {
-                        if (!e.recoverableData) throw e
-                        DriveRuntime.mutable.value = DriveRuntime.mutable.value.copy(speed=null, speedAt=null, destination=null, message=e.userMessage)
+                    if (wantsDestination) {
+                        try {
+                            ble.send(session.readRequest(false))
+                            val drive = withContext(Dispatchers.Default) { session.readResponse(ble.response(session)) }.driveState
+                            val destination = DriveDestination.from(
+                                if (drive.hasActiveRouteDestination()) drive.activeRouteDestination else null,
+                                if (drive.hasActiveRouteCoordinates()) drive.activeRouteCoordinates.latitude.toDouble() else null,
+                                if (drive.hasActiveRouteCoordinates()) drive.activeRouteCoordinates.longitude.toDouble() else null,
+                                SystemClock.elapsedRealtime())
+                            DriveRuntime.mutable.value = DriveRuntime.mutable.value.copy(destination = destination,
+                                message = if (destination == null) "Destination Tesla indisponible. Vous pouvez utiliser Waze directement." else "Destination Tesla récupérée · prête pour Waze")
+                        } catch (e: DriveFailure) {
+                            if (!e.recoverableData) throw e
+                            DriveRuntime.mutable.value = DriveRuntime.mutable.value.copy(destination=null, message=e.userMessage)
+                        }
                     }
                     if (now - lastCharge >= 30_000) {
                         try {
@@ -150,7 +149,7 @@ class DriveService : Service() {
             } finally {
                 transport?.close(); transport = null; removeOverlay()
                 DriveRuntime.mutable.value = DriveRuntime.mutable.value.copy(running = false, connected = false, overlay = false,
-                    speed = null, battery = null, rangeKm = null, destination = null)
+                    battery = null, rangeKm = null, destination = null)
                 stopForeground(STOP_FOREGROUND_REMOVE); stopSelf()
             }
         }
@@ -190,7 +189,7 @@ class DriveService : Service() {
     override fun onDestroy() {
         sessionJob?.cancel(); transport?.close(); transport = null; removeOverlay(); scope.cancel()
         DriveRuntime.mutable.value = DriveRuntime.mutable.value.copy(running=false, connected=false, overlay=false,
-            speed=null, battery=null, rangeKm=null, destination=null)
+            battery=null, rangeKm=null, destination=null)
         super.onDestroy()
     }
     companion object {

@@ -18,7 +18,7 @@ class DriveScreenTest {
     @Test fun driveIsAccessibleWithoutRelayOrBluetoothAndRejectsInvalidVin() {
         compose.onNodeWithText("Conduite").performClick()
         compose.onNodeWithText("Votre cockpit local").assertIsDisplayed()
-        androidx.test.espresso.Espresso.onView(androidx.test.espresso.matcher.ViewMatchers.withText("— km/h"))
+        androidx.test.espresso.Espresso.onView(androidx.test.espresso.matcher.ViewMatchers.withText("— %"))
             .check(androidx.test.espresso.assertion.ViewAssertions.matches(androidx.test.espresso.matcher.ViewMatchers.isDisplayed()))
         compose.onNodeWithText("Connecter en BLE").performScrollTo().performClick()
         compose.onNodeWithText("Saisissez les 17 caractères du VIN, sans I, O ni Q.").performScrollTo().assertIsDisplayed()
@@ -31,7 +31,7 @@ class DriveScreenTest {
         compose.onNodeWithText("Annuler").performClick()
         assertFalse(DriveRuntime.state.value.running)
     }
-    @Test fun overlayWindowsNeverCaptureTouchesAndAreRemovedTogether() {
+    @Test fun batteryOverlayNeverCapturesTouchesAndIsRemoved() {
         // Emulator/test installation only: restore its previous app-op in all cases.
         val automation=androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().uiAutomation
         val pkg=compose.activity.packageName
@@ -43,12 +43,13 @@ class DriveScreenTest {
             shell("appops set $pkg SYSTEM_ALERT_WINDOW allow")
             compose.runOnIdle {
                 overlay.show(CockpitPreferences())
-                overlay.render(CockpitText("— km/h","— %","— km"))
-                assertEquals(2,overlay.windows.size)
+                overlay.render(CockpitText("— %","— km"))
+                assertEquals(1,overlay.windows.size)
                 val views=overlay.windows.toList()
                 for (view in views) {
                     val layout=view.layoutParams as android.view.WindowManager.LayoutParams
                     assertEquals(android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,layout.type)
+                    assertEquals(android.view.Gravity.TOP or android.view.Gravity.END,layout.gravity)
                     assertTrue(layout.flags and android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE != 0)
                     assertTrue(layout.flags and android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE != 0)
                     assertTrue(layout.alpha <= 0.75f)

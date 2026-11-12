@@ -87,15 +87,16 @@ fun DriveScreen() {
         Switch(checked = demo && !state.running, onCheckedChange = { demo = it }, enabled = !state.running)
     }
     if (demo && !state.running) Text("DÉMONSTRATION · chiffres fictifs, aucun Bluetooth activé")
-    val text = if (demo && !state.running) CockpitText("82 km/h", "73 %", if (preferences.showRange) "418 km" else "") else state.cockpit(now, preferences.showRange)
-    key(preferences.size) { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        AndroidView(factory = { CockpitBlock(it,true,preferences.size) }, update = { it.render(text) }, modifier = Modifier.weight(1f))
-        AndroidView(factory = { CockpitBlock(it,false,preferences.size) }, update = { it.render(text) }, modifier = Modifier.weight(1f))
-    } }
-    Text("Sources : vitesse, batterie et autonomie Tesla par BLE. Autonomie affichée : battery_range, convertie en km, pas le WLTP.", style = MaterialTheme.typography.bodySmall)
+    val text = if (demo && !state.running) CockpitText("73 %", if (preferences.showRange) "418 km" else "") else state.cockpit(now, preferences.showRange)
+    key(preferences.size) {
+        Box(Modifier.fillMaxWidth(), contentAlignment = androidx.compose.ui.Alignment.CenterEnd) {
+            AndroidView(factory = { CockpitBlock(it,preferences.size) }, update = { it.render(text) })
+        }
+    }
+    Text("Batterie et autonomie de référence fournies par Tesla en BLE. L’autonomie affichée n’est pas une prévision pour votre trajet.", style = MaterialTheme.typography.bodySmall)
     fun age(at: Long?) = if (at == null) "jamais reçue" else "il y a ${((now-at).coerceAtLeast(0)/1000)} s"
-    Text("Vitesse : ${age(state.speedAt)} · batterie/autonomie : ${age(state.chargeAt)}", style = MaterialTheme.typography.bodySmall)
-    Text("Les valeurs deviennent — après 6 s pour la vitesse et 60 s pour la batterie. Ce cockpit ne remplace pas l’instrumentation de la voiture.", style = MaterialTheme.typography.bodySmall)
+    Text("Batterie/autonomie : ${age(state.chargeAt)}", style = MaterialTheme.typography.bodySmall)
+    Text("Les valeurs deviennent — après 60 s sans nouvelle mesure.", style = MaterialTheme.typography.bodySmall)
     if (!state.running) {
         OutlinedTextField(vin, { vin = it.take(17) }, label = { Text("VIN de la voiture (17 caractères)") },
             singleLine = true, keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters), modifier = Modifier.fillMaxWidth())
